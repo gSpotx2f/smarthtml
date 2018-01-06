@@ -95,7 +95,7 @@ SCRIPT_ROOT="/opt/var/smarthtml"
 DB_DIR="${SCRIPT_ROOT}/db"
 LOG_DIR="${SCRIPT_ROOT}/log"
 MTA_MSG_FILE="${SCRIPT_ROOT}/email"
-HTML_DIR="/opt/share/www"
+HTML_DIR="/opt/share/www/custom"
 HTML_OUTPUT="${HTML_DIR}/smart.html"
 CGI_MODULE_WWW_PATH="/cgi-bin/smarthtml.cgi"
 RRD_DB_DIR="${SCRIPT_ROOT}/rrd"
@@ -547,7 +547,7 @@ GetDeviceInfo () {
                                                                     for(i in rrdsmartarray) {
                                                                         if(RRD_SMART_ATTR_DEF_PIC == "smart"$1) def_smart_attr_title=$2;
                                                                         if(rrdsmartarray[i] == "smart"$1) {
-                                                                            _attrtitlestr="<a href=\"javascript:void(0)\" onclick=\"showGraph(this.textContent, \047graph_attr_"DEVICE"\047, \047graph_img_"DEVICE"\047, \047"DEVICE"_smart"$1"\047)\">"$2"</a>";
+                                                                            _attrtitlestr="<a href=\"javascript:void(0)\" title=\"Show graph\" onclick=\"showGraph(this.textContent, \047graph_attr_"DEVICE"\047, \047graph_img_"DEVICE"\047, \047"DEVICE"_smart"$1"\047)\">"$2"</a>";
                                                                             break;
                                                                         };
                                                                     };

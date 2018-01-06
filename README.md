@@ -46,7 +46,7 @@ ___________________
 
     chmod +x /opt/share/www/cgi-bin/smarthtml.cgi
 
- В smarthtml.sh установите переменную USE_CGI_MODULE=1. Веб-сервер должен быть настроен на выполнение .cgi сценариев с помощью /bin/sh.
+ В smarthtml.sh установите переменные: USE_CGI_MODULE=1, HTML_DIR="/opt/share/www" Веб-сервер должен быть настроен на выполнение .cgi сценариев с помощью /bin/sh.
  
 ___________________
 
@@ -108,7 +108,7 @@ Installation notes.
 
     chmod +x /opt/share/www/cgi-bin/smarthtml.cgi
 
- Set USE_CGI_MODULE=1 in smarthtml.sh. Your web-server must execute .cgi scripts via /bin/sh.
+ Set USE_CGI_MODULE=1, HTML_DIR="/opt/share/www" in smarthtml.sh. Your web-server must execute .cgi scripts via /bin/sh.
  
 ___________________
 
