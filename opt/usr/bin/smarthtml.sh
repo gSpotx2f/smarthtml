@@ -4,8 +4,8 @@
 #
 # S.M.A.R.T.Html v1.0 (c) 2018
 #
-# Author:   gSpot at wl500g.info
-# License:  GPLv3
+# Author:       gSpot <https://github.com/gSpotx2f/smarthtml>
+# License:      GPLv3
 # Depends:      smartmontools
 # Recommends:   rrdtool, sendmail, openssl
 #
@@ -44,58 +44,64 @@ USE_RRD=1
 ### RRD database preset (1 - 30mins; 2 - 1hour; 3 - 3hours; 4 - 6hours; 5 - 12hours; 6 - 24hours)
 RRD_DB_PRESET=3
 ### S.M.A.R.T. attributes for RRD
-RRD_SMART_ATTRS="smart3 smart194" # Spin-up time & temperature
-#RRD_SMART_ATTRS="smart194" # Only a temperature data for RRD
-RRD_SMART_ATTR_DEF_PIC="smart194"
+RRD_SMART_ATTRS="smart3 smart190 smart194"  # Spin-up time & temperature
+#RRD_SMART_ATTRS="smart190 smart194"    # Only a temperature data for RRD
+RRD_SMART_ATTR_DEF_PIC="smart190 smart194"
 ### CGI-module smarthtml.cgi (0 - disable; 1 - enable)
 USE_CGI_MODULE=0
 
 ############################# Base config ##############################
 export NAME="smarthtml"
-export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/sbin:/opt/bin:/opt/sbin:/opt/usr/bin:/opt/usr/sbin"
+export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export LANG="en_US.UTF-8"
+export LANGUAGE="en"
 export HOSTNAME="$HOSTNAME"
-AWKCMD="awk"
-DFCMD="df -h"
-SMARTCTL=`which smartctl`
+
+### External config
+CONFIG_FILE="/opt/etc/${NAME}.conf"
+[ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
+
+AWK_CMD="awk"
+DF_CMD="df -h"
+SMARTCTL_CMD=`which smartctl`
 if [ $? -ne 0 ]; then
     echo " Error! smartctl doesn't exists..." >&2
     exit 1
 fi
 SMARTCTL_PARAMS="-iAHf old -l scttemp"
 FDISK=`which fdisk`
-if [ $USE_FDISK -eq 1 -a $? -ne 0 ]; then
+if [ $USE_FDISK = "1" -a $? -ne 0 ]; then
     echo " Error! fdisk doesn't exists..." >&2
     USE_FDISK=0
 fi
-LOGGERCMD=`which logger`
-if [ $USE_LOGGER -eq 1 -a $? -ne 0 ]; then
+LOGGER_CMD=`which logger`
+if [ $USE_LOGGER = "1" -a $? -ne 0 ]; then
     echo " Error! logger doesn't exists..." >&2
     USE_LOGGER=0
 fi
 LOGGER_PARAMS="-t \"${NAME}\" -p user.warning"
-RRDTOOLCMD=`which rrdtool`
-if [ $USE_RRD -eq 1 -a $? -ne 0 ]; then
+RRDTOOL_CMD=`which rrdtool`
+if [ $USE_RRD = "1" -a $? -ne 0 ]; then
     echo " Error! rrdtool doesn't exists..." >&2
     USE_RRD=0
 fi
-OPENSSLCMD=`which openssl`
-if [ $USE_MAIL -eq 1 -a $? -ne 0 ]; then
+OPENSSL_CMD=`which openssl`
+if [ $USE_MAIL = "1" -a $? -ne 0 ]; then
     echo " Error! openssl doesn't exists..." >&2
     USE_MAIL=0
 fi
 MTA=`which sendmail`
-if [ $USE_MAIL -eq 1 -a $? -ne 0 ]; then
+if [ $USE_MAIL = "1" -a $? -ne 0 ]; then
     echo " Error! MTA doesn't exists..." >&2
     USE_MAIL=0
 fi
-MTACMD="${MTA} ${MAIL_RECIPIENT} -au${MAIL_LOGIN} -ap${MAIL_PASSWORD} -f ${MAIL_SENDER} -H "
-MTA_HELPER="exec ${OPENSSLCMD} s_client -quiet -tls1 -starttls smtp -connect ${MAIL_SMTP}"
+MTA_CMD="${MTA} ${MAIL_RECIPIENT} -au${MAIL_LOGIN} -ap${MAIL_PASSWORD} -f ${MAIL_SENDER} -H "
+MTA_HELPER="exec ${OPENSSL_CMD} s_client -quiet -tls1 -starttls smtp -connect ${MAIL_SMTP}"
 SCRIPT_ROOT="/opt/var/smarthtml"
 DB_DIR="${SCRIPT_ROOT}/db"
 LOG_DIR="${SCRIPT_ROOT}/log"
 MTA_MSG_FILE="${SCRIPT_ROOT}/email"
-HTML_DIR="/opt/share/www/custom"
+HTML_DIR="/var/www"
 HTML_OUTPUT="${HTML_DIR}/smart.html"
 CGI_MODULE_WWW_PATH="/cgi-bin/smarthtml.cgi"
 RRD_DB_DIR="${SCRIPT_ROOT}/rrd"
@@ -210,7 +216,7 @@ cat << EOF > $HTML_OUTPUT
 body { margin: 0px; padding: 0px; background-color: ${HTML_MAIN_BGCOLOR}; font-family: sans-serif; font-size: 11pt; font-weight: 400; color: ${HTML_MAIN_FONT_COLOR} }
 #main_layout { width: 100%; min-width: 760px }
 #alert_bar { position: relative; width: 100%; text-align: center; padding: 5px 0px 5px 0px; font-size: 10pt; border-top: 0px; border-bottom: 1px solid ${HTML_BORDER_COLOR}; border-left: 0px; border-right: 0px }
-#screen_locker { position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: ${HTML_MAIN_BGCOLOR}; text-align: center; font-weight: 700; opacity: 0.7; z-index: 1; display: block }
+#screen_locker { position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: ${HTML_MAIN_BGCOLOR}; text-align: center; font-weight: 700; opacity: 0.7; z-index: 1 }
 #screen_error { position: relative; width: 100%; background-color: #F9F9F9; text-align: center; font-weight: 700 }
 a { text-decoration: none; outline: none; border-bottom: 1px dotted ${HTML_MAIN_FONT_COLOR}; color: ${HTML_MAIN_FONT_COLOR} }
 a:hover { color: #000000 }
@@ -294,7 +300,7 @@ EOF
         echo "    start_suff_array.push(\"${graphstart}\");" >> $HTML_OUTPUT
     done
     printf "    start_suff_array.sort(function(a, b){a = Number(a.replace(/[^0-9]*/), \"\"); b = Number(b.replace(/[^0-9]*/), \"\"); if(a < b) return -1; if(a > b) return 1; return 0});\n</script><div id=\"main_layout\">" >> $HTML_OUTPUT
-    if [ $USE_CGI_MODULE -eq 1 ]; then
+    if [ $USE_CGI_MODULE = "1" ]; then
 cat << EOF >> $HTML_OUTPUT
 <div class="top_panel">
 <a href="javascript:void(0)" onclick="sendCgiRequest('refresh', false)">Check Now</a> | <a href="javascript:void(0)" onclick="sendCgiRequest('resetwarn', false)">Reset Warnings</a> | <a href="javascript:void(0)" onclick="sendCgiRequest('resetcount', 'All attribute counters will be reset... Are you sure?')">Reset Counters</a>&nbsp;
@@ -323,12 +329,12 @@ GetDateString () {
 }
 
 MakeSMARTDB () {
-    $SMARTCTL $SMARTCTL_PARAMS $1 | $AWKCMD '/^[ ]?[ ]?[0-9]?[0-9]?[0-9] [a-zA-Z_-]+ / {sub(/^ */, "", $0); printf "0 0 0 %s %s 0\n", $10, $1}' > $2
+    $SMARTCTL_CMD $SMARTCTL_PARAMS $1 | $AWK_CMD '/^[ ]?[ ]?[0-9]?[0-9]?[0-9] [a-zA-Z_-]+ / {sub(/^ */, "", $0); printf "0 0 0 %s %s 0\n", $10, $1}' > $2
 }
 
 ResetSMARTDB () {
     [ -f "$1" ] || exit 1
-    $AWKCMD -v TYPE=$2 '{
+    $AWK_CMD -v TYPE=$2 '{
                             if(TYPE == "warn") printf "0 %s %s", $2, $3;
                             else printf "%s 0 0", $1;
                             print " "$4,$5,$6;
@@ -339,7 +345,7 @@ ResetSMARTDBAll () {
     local device_path device db_file
     for device_path in $DEVICES
     do
-        device=`echo "$device_path" | $AWKCMD -F "/" '{print $NF}'`
+        device=`echo "$device_path" | $AWK_CMD -F "/" '{print $NF}'`
         db_file="${DB_DIR}/${device}"
         [ -f "$db_file" ] || continue
         ResetSMARTDB $db_file $1
@@ -351,7 +357,7 @@ MakeRRDDB () {
         echo " MakeRRDDB Error! ${1} is already exists..." >&2
     else
         local attr
-        eval `printf "%s create %s -s %s " $RRDTOOLCMD $1 $RRD_DB_STEP
+        eval `printf "%s create %s -s %s " $RRDTOOL_CMD $1 $RRD_DB_STEP
         for attr in $RRD_SMART_ATTRS
         do
             printf "DS:%s:GAUGE:%s:0:U " $attr $RRD_INTERVAL
@@ -367,7 +373,7 @@ MakeRRDDB () {
 
 FillRRDDB () {
     if [ -e "$1" ]; then
-        eval `echo "$RRD_SMART_ATTRS" | $AWKCMD -v RRDTOOLCMD=$RRDTOOLCMD -v RRDDB_FILE=$1 '
+        eval `echo "$RRD_SMART_ATTRS" | $AWK_CMD -v RRDTOOL_CMD=$RRDTOOL_CMD -v RRDDB_FILE=$1 '
                                             function makeRRDStringPart(_val) {
                                                 for(i = 1; i <= NF; i++) {
                                                     attrvalue=(length(ENVIRON[$i]) == 0) ? 0 : ENVIRON[$i];
@@ -375,7 +381,7 @@ FillRRDDB () {
                                                 };
                                             }
                                             {
-                                                printf "%s update %s -t ", RRDTOOLCMD, RRDDB_FILE;
+                                                printf "%s update %s -t ", RRDTOOL_CMD, RRDDB_FILE;
                                                 makeRRDStringPart(0);
                                                 printf "%s", " N:";
                                                 makeRRDStringPart(1);
@@ -402,7 +408,7 @@ MakeRRDGraph () {
             for graphstart in $RRD_GRAPH_START
             do
                 rrd_graph_file="${RRD_GRAPH_DIR}/${2}_${attr}_${graphstart}.${RRD_GRAPH_EXT}"
-                $RRDTOOLCMD graph $rrd_graph_file --force-rules-legend --slope-mode --watermark "generated by ${NAME} at `GetDateString`" --width $RRD_GRAPH_WIDTH --height $RRD_GRAPH_HEIGHT --start "$graphstart" --end "$RRD_GRAPH_END" --title "${device_path} (${graphstart})" -v "$units" --imgformat "$RRD_GRAPH_TYPE" --color BACK${RRD_GRAPH_COLOR_BACK} --color SHADEA${RRD_GRAPH_COLOR_SHADEA} --color SHADEB${RRD_GRAPH_COLOR_SHADEB} --color CANVAS${RRD_GRAPH_COLOR_CANVAS} --color FONT${RRD_GRAPH_COLOR_FONT} --color MGRID${RRD_GRAPH_COLOR_MGRID} --color GRID${RRD_GRAPH_COLOR_GRID}  --color AXIS${RRD_GRAPH_COLOR_AXIS} --color FRAME${RRD_GRAPH_COLOR_FRAME} --color ARROW${RRD_GRAPH_COLOR_ARROW} --font "TITLE:10:" --font "AXIS:8:" --font "UNIT:8:" --font "LEGEND:8:" \
+                $RRDTOOL_CMD graph $rrd_graph_file --force-rules-legend --slope-mode --watermark "generated by ${NAME} at `GetDateString`" --width $RRD_GRAPH_WIDTH --height $RRD_GRAPH_HEIGHT --start "$graphstart" --end "$RRD_GRAPH_END" --title "${device_path} (${graphstart})" -v "$units" --imgformat "$RRD_GRAPH_TYPE" --color BACK${RRD_GRAPH_COLOR_BACK} --color SHADEA${RRD_GRAPH_COLOR_SHADEA} --color SHADEB${RRD_GRAPH_COLOR_SHADEB} --color CANVAS${RRD_GRAPH_COLOR_CANVAS} --color FONT${RRD_GRAPH_COLOR_FONT} --color MGRID${RRD_GRAPH_COLOR_MGRID} --color GRID${RRD_GRAPH_COLOR_GRID}  --color AXIS${RRD_GRAPH_COLOR_AXIS} --color FRAME${RRD_GRAPH_COLOR_FRAME} --color ARROW${RRD_GRAPH_COLOR_ARROW} --font "TITLE:10:" --font "AXIS:8:" --font "UNIT:8:" --font "LEGEND:8:" \
                 DEF:${attr}=${1}:${attr}:MAX \
                 AREA:${attr}${RRD_GRAPH_COLOR_AREA}:${attr} \
                 LINE1:${attr}${RRD_GRAPH_COLOR_LINE}: \
@@ -420,7 +426,7 @@ MakeRRDGraph () {
 GetPartitionsInfo () {
     local partition mpoint
     echo "<div class=\"main\"><span class=\"info_label\">Disk & partitions info:</span>" >> $HTML_OUTPUT
-    for partition in `$FDISK -l $1 | $AWKCMD -v HTML_OUTPUT=$HTML_OUTPUT '
+    for partition in `$FDISK -l $1 | $AWK_CMD -v HTML_OUTPUT=$HTML_OUTPUT '
         BEGIN {
             parts_str=""; disk_info_str=""; part_info_str=""; boot_cell="no";
         }
@@ -447,7 +453,7 @@ GetPartitionsInfo () {
             printf "%s", parts_str;
         }'`
     do
-        $DFCMD $partition | $AWKCMD -v PARTITION=$partition -v FS_CAPACITY_LIMIT_WARNING=$FS_CAPACITY_LIMIT_WARNING '
+        $DF_CMD $partition | $AWK_CMD -v PARTITION=$partition -v FS_CAPACITY_LIMIT_WARNING=$FS_CAPACITY_LIMIT_WARNING '
             (NR == 2 && $1 == PARTITION) {
                 df_str="";
                 for(i = 1; i <= NF; i++) {
@@ -464,36 +470,43 @@ GetPartitionsInfo () {
 }
 
 GetDeviceInfo () {
-    local device_path device db_file log_file
+    local device_path device db_file log_file unsupported_device=0
     for device_path in $DEVICES
     do
         [ -b "$device_path" ] || continue
-        device=`echo "$device_path" | $AWKCMD -F "/" '{print $NF}'`
+        device=`echo "$device_path" | $AWK_CMD -F "/" '{print $NF}'`
         db_file="${DB_DIR}/${device}"
         log_file="${LOG_DIR}/${device}.log"
         [ ! -f "$db_file" -o ! -s "$db_file" ] && MakeSMARTDB $device_path $db_file
         if [ -s "$db_file" ]; then
-            export $($SMARTCTL $SMARTCTL_PARAMS $device_path | $AWKCMD -v TEMP_ALERT=$TEMP_ALERT -v WARN_AUTO_RESET=$WARN_AUTO_RESET -v WARN_AUTO_RESET_COUNT=$WARN_AUTO_RESET_COUNT -v HTML_OUTPUT=$HTML_OUTPUT -v LOG_FILE=$log_file -v DB_FILE=$db_file -v DB_FILE_TMP=${db_file}.tmp -v DATE="`GetDateString`" -v DEVICE_PATH=$device_path -v DEVICE=$device -v LOGGERCMD=$LOGGERCMD -v LOGGER_PARAMS="$LOGGER_PARAMS" -v LOG_ALL=$LOG_ALL -v USE_LOGGER=$USE_LOGGER -v USE_MAIL=$USE_MAIL -v MTA_MSG_FILE=$MTA_MSG_FILE -v DISABLED_SMART_ATTRS="$DISABLED_SMART_ATTRS" -v TEMP_HISTORY=$TEMP_HISTORY -v USE_RRD=$USE_RRD -v RRD_SMART_ATTRS="$RRD_SMART_ATTRS" -v RRD_SMART_ATTR_DEF_PIC=$RRD_SMART_ATTR_DEF_PIC '
+            export $($SMARTCTL_CMD $SMARTCTL_PARAMS $device_path | $AWK_CMD -v TEMP_ALERT=$TEMP_ALERT -v WARN_AUTO_RESET=$WARN_AUTO_RESET -v WARN_AUTO_RESET_COUNT=$WARN_AUTO_RESET_COUNT -v HTML_OUTPUT=$HTML_OUTPUT -v LOG_FILE=$log_file -v DB_FILE=$db_file -v DB_FILE_TMP=${db_file}.tmp -v DATE="`GetDateString`" -v DEVICE_PATH=$device_path -v DEVICE=$device -v LOGGER_CMD=$LOGGER_CMD -v LOGGER_PARAMS="$LOGGER_PARAMS" -v LOG_ALL=$LOG_ALL -v USE_LOGGER=$USE_LOGGER -v USE_MAIL=$USE_MAIL -v MTA_MSG_FILE=$MTA_MSG_FILE -v DISABLED_SMART_ATTRS="$DISABLED_SMART_ATTRS" -v TEMP_HISTORY=$TEMP_HISTORY -v USE_RRD=$USE_RRD -v RRD_SMART_ATTRS="$RRD_SMART_ATTRS" -v RRD_SMART_ATTR_DEF_PIC="$RRD_SMART_ATTR_DEF_PIC" '
                                                     BEGIN {
-                                                        unsupported_device=0; powercc=0; poweron=0; startstopcnt=0; selftest=""; def_smart_attr_title=""; devinfo_str=""; devinfo_str_part=""; devicemodel=""; devinfosection=0;
+                                                        unsupported_device=0; powercc=0; poweron=0; startstopcnt=0; selftest=""; def_smart_attr_title=""; def_smart_attr_var=""; devinfo_str=""; devinfo_str_part=""; devicemodel=""; devinfosection=0;
                                                         temphistory_str="<tr class=\"infoarea\"><td align=\"center\">Index</td><td align=\"center\" colspan=\"2\">Est. Time</td><td align=\"center\">Temp C</td><td align=\"left\">&nbsp;</td></tr>";
                                                         PROCINFO["sorted_in"]="@ind_str_asc";
                                                         split(RRD_SMART_ATTRS, rrdsmartarray, " ");
                                                         split(DISABLED_SMART_ATTRS, smartdisarray, " ");
+                                                        makeConstArray(RRD_SMART_ATTR_DEF_PIC, rrd_def_pic_array, " ");
+                                                        is_rrd_def_pic=0;
                                                     }
+                                                    function makeConstArray(string, array, separator,  _split_array, _i) {
+                                                        split(string, _split_array, separator);
+                                                        for(_i in _split_array)
+                                                            array[_split_array[_i]]="";
+                                                    };
                                                     function makeLogString(id, attrname, rval, val, wrst, trhd, sval, msg, critical) {
                                                         printf "%s -- %s -- %s %s -- %s -- Last=%s (VALUE=%s WORST=%s THRESH=%s) -- Saved=%s\n",  DATE, DEVICE_PATH, id, attrname, msg, rval, val, wrst, trhd, sval >>LOG_FILE;
                                                         if(critical == 1) {
                                                             if(USE_MAIL == 1)
                                                                 printf "%s -- %s -- %s -- %s %s -- %s -- Last=%s (VALUE=%s WORST=%s THRESH=%s) -- Saved=%s\n", ENVIRON["HOSTNAME"],  DATE, DEVICE_PATH, id, attrname, msg, rval, val, wrst, trhd, sval >>MTA_MSG_FILE;
                                                             if(USE_LOGGER == 1)
-                                                                system(LOGGERCMD " " LOGGER_PARAMS " \"" DEVICE_PATH " -- " id " " attrname " -- " msg " -- Last=" rval " (VALUE=" val " WORST=" wrst " THRESH=" trhd ") -- Saved=" sval"\"");
+                                                                system(LOGGER_CMD " " LOGGER_PARAMS " \"" DEVICE_PATH " -- " id " " attrname " -- " msg " -- Last=" rval " (VALUE=" val " WORST=" wrst " THRESH=" trhd ") -- Saved=" sval"\"");
                                                         };
                                                     };
                                                     function makeDeviceHeader(dev) {
                                                         printf "<div class=\"header\">%s&nbsp;|&nbsp;%s&nbsp;|&nbsp;Last&nbsp;check:&nbsp;%s</div>\n", DEVICE_PATH, dev, DATE >>HTML_OUTPUT;
                                                     };
-                                                    function checkSmart(id, val, type, critical, alert, isbad, logging,  _string, _impr_val, _degr_val, _stat_val, _change_val, _trclass, _str_log_value, _stat_mark, _attrtitlestr, _alert_bar_val, _warn_reset_count) {
+                                                    function checkSmart(id, val, type, critical, alert, isbad, logging,  _string, _impr_val, _degr_val, _stat_val, _change_val, _trclass, _str_log_value, _stat_mark, _attrtitlestr, _alert_bar_val, _warn_reset_count, _smart_var) {
                                                         _string="";
                                                         while((getline _string <DB_FILE) > 0) {
                                                             _impr_val=0; _degr_val=0; _stat_val=0;
@@ -544,9 +557,14 @@ GetDeviceInfo () {
                                                                 _trclass=(isbad == 1) ? "thrshld" : (_stat_val == 4) ? "nonzero" : (_stat_val == 3) ? "degr" : (_stat_val == 2) ? "lowdegr" : (_stat_val == 1) ? "impr" : "idle";
                                                                 _attrtitlestr="";
                                                                 if(USE_RRD == 1) {
+                                                                    _smart_var="smart"$1;
                                                                     for(i in rrdsmartarray) {
-                                                                        if(RRD_SMART_ATTR_DEF_PIC == "smart"$1) def_smart_attr_title=$2;
-                                                                        if(rrdsmartarray[i] == "smart"$1) {
+                                                                        if(is_rrd_def_pic == 0 && _smart_var in rrd_def_pic_array) {
+                                                                            def_smart_attr_title=$2;
+                                                                            def_smart_attr_var=_smart_var;
+                                                                            is_rrd_def_pic=1;
+                                                                        };
+                                                                        if(rrdsmartarray[i] == _smart_var) {
                                                                             _attrtitlestr="<a href=\"javascript:void(0)\" title=\"Show graph\" onclick=\"showGraph(this.textContent, \047graph_attr_"DEVICE"\047, \047graph_img_"DEVICE"\047, \047"DEVICE"_smart"$1"\047)\">"$2"</a>";
                                                                             break;
                                                                         };
@@ -604,7 +622,7 @@ GetDeviceInfo () {
                                                             if($1 == "4") startstopcnt=$10;
                                                             else if($1 == "9") poweron=$10;
                                                             else if($1 == "12") powercc=$10;
-                                                            else if($1 ~ /^(5|11|184|187|196|197|198|200|202|220)$/) checkSmart($1, $10, 0, 1, 0, isbad, LOG_ALL);
+                                                            else if($1 ~ /^(5|11|183|184|187|196|197|198|200|202|220)$/) checkSmart($1, $10, 0, 1, 0, isbad, LOG_ALL);
                                                             else if($1 ~ /^(190|194)$/) checkSmart($1, $10, 0, 0, TEMP_ALERT, isbad, LOG_ALL);
                                                             else if($1 ~ /^(2|8)$/) checkSmart($1, $10, 1, 0, 0, isbad, LOG_ALL);
                                                             else checkSmart($1, $10, 0, 0, 0, isbad, LOG_ALL);
@@ -617,8 +635,8 @@ GetDeviceInfo () {
                                                     END {
                                                         if(unsupported_device == 0) {
                                                             printf "<tr class=\"theader\"><td align=\"right\" colspan=\"10\">4 <span class=\"hex\">(04)</span> Start/Stop Count: <b>%s</b> | 9 <span class=\"hex\">(09)</span> Power-On Hours: <b>%s</b> | 12 <span class=\"hex\">(C0)</span> Power Cycle Count: <b>%s</b></td></tr></table></div><div class=\"main\"><b>%s</b></div>", startstopcnt, poweron, powercc, selftest >>HTML_OUTPUT;
-                                                            if(USE_RRD == 1 && length(RRD_SMART_ATTR_DEF_PIC) > 0)
-                                                                printf "<div class=\"main\"><div id=\"graph_attr_"DEVICE"\"></div><img id=\"graph_img_"DEVICE"\" src=\"\" /><script type=\"text/javascript\">showGraph(\047"def_smart_attr_title"\047, \047graph_attr_"DEVICE"\047, \047graph_img_"DEVICE"\047, \047"DEVICE"_"RRD_SMART_ATTR_DEF_PIC"\047)</script></div>" >>HTML_OUTPUT;
+                                                            if(USE_RRD == 1 && length(def_smart_attr_title) > 0)
+                                                                printf "<div class=\"main\"><div id=\"graph_attr_"DEVICE"\"></div><img id=\"graph_img_"DEVICE"\" src=\"\" /><script type=\"text/javascript\">showGraph(\047"def_smart_attr_title"\047, \047graph_attr_"DEVICE"\047, \047graph_img_"DEVICE"\047, \047"DEVICE"_"def_smart_attr_var"\047)</script></div>" >>HTML_OUTPUT;
                                                             if(TEMP_HISTORY == 1)
                                                                 printf "<div class=\"main\"><span class=\"info_label\">SCT temperature history:</span><div class=\"temp_history\"><table class=\"temp_history_table\">%s</table></div></div>", temphistory_str >>HTML_OUTPUT;
                                                             printf "<div class=\"main\"><span class=\"info_label\">Device info:</span><table class=\"info_table\">%s</table></div>\n", devinfo_str >>HTML_OUTPUT;
@@ -626,8 +644,8 @@ GetDeviceInfo () {
                                                         ### STDOUT
                                                         printf "unsupported_device=%s ", unsupported_device;
                                                     }' && mv -f ${db_file}.tmp $db_file)
-            [ $USE_FDISK -eq 1 ] && GetPartitionsInfo $device_path
-            if [ $USE_RRD -eq 1 -a $unsupported_device -eq 0 -a $# -eq 1 -a "$1" = "rrd" ]; then
+            [ $USE_FDISK = "1" ] && GetPartitionsInfo $device_path
+            if [ $USE_RRD = "1" -a $unsupported_device = "0" -a $# -eq 1 -a "$1" = "rrd" ]; then
                 local rrd_db_file="${RRD_DB_DIR}/${device}.${RRD_DB_EXT}"
                 [ -e "$rrd_db_file" ] || MakeRRDDB $rrd_db_file
                 FillRRDDB $rrd_db_file
@@ -641,7 +659,7 @@ GetDeviceInfo () {
 SendMail () {
     [ -n "$1" -a "$1" != "-v" ] && exit 1
     if [ -f "$MTA_MSG_FILE" -a -s "$MTA_MSG_FILE" ]; then
-        $AWKCMD 'BEGIN {printf "Subject: <%s Alert: %s>\n\n", ENVIRON["NAME"], ENVIRON["HOSTNAME"]} {print $0}' $MTA_MSG_FILE | ${MTACMD}"${MTA_HELPER}" $1
+        $AWK_CMD 'BEGIN {printf "Subject: <%s Alert: %s>\n\n", ENVIRON["NAME"], ENVIRON["HOSTNAME"]} {print $0}' $MTA_MSG_FILE | ${MTA_CMD}"${MTA_HELPER}" $1
     fi
     [ -e "$MTA_MSG_FILE" ] && rm -f $MTA_MSG_FILE
 }
@@ -658,7 +676,7 @@ MainRun () {
     MakeHtmlHeader
     GetDeviceInfo $1
     MakeHtmlFooter
-    [ $USE_MAIL -eq 1 ] && SendMail &> /dev/null
+    [ $USE_MAIL = "1" ] && SendMail &> /dev/null
 }
 
 ############################ Main section ##############################
@@ -670,18 +688,18 @@ case $1 in
         ResetSMARTDBAll count
     ;;
     makerrdgraph)
-        if [ $USE_RRD -eq 1 ]; then
+        if [ $USE_RRD = "1" ]; then
             for device_path in $DEVICES
             do
                 [ -b "$device_path" ] || continue
-                device=`echo "$device_path" | $AWKCMD -F "/" '{print $NF}'`
+                device=`echo "$device_path" | $AWK_CMD -F "/" '{print $NF}'`
                 rrd_db_file="${RRD_DB_DIR}/${device}.${RRD_DB_EXT}"
                 MakeRRDGraph $rrd_db_file $device
             done
         fi
     ;;
     mailtest)
-        if [ $USE_MAIL -eq 1 ]; then
+        if [ $USE_MAIL = "1" ]; then
             echo "${HOSTNAME} -- This is a test message..." > $MTA_MSG_FILE
             SendMail -v
         fi
