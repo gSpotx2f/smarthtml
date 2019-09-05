@@ -428,16 +428,18 @@ GetPartitionsInfo () {
     echo "<div class=\"main\"><span class=\"info_label\">Disk & partitions info:</span>" >> $HTML_OUTPUT
     for partition in `$FDISK -l $1 | $AWK_CMD -v HTML_OUTPUT=$HTML_OUTPUT '
         BEGIN {
-            parts_str=""; disk_info_str=""; part_info_str=""; boot_cell="no";
+            parts_str=""; disk_info_str=""; part_info_str=""; boot_cell="no"; fields=0;
         }
         {
             if($0 ~ /^([ ]*Device|[\057]dev[\057])/) {
-                if($0 ~ /^[\057]dev[\057]/)
+                if($0 ~ /^[ ]*Device/)
+                    fields=NF;
+                else
                     parts_str=(length(parts_str) == 0) ? $1 : parts_str" "$1;
-                boot_cell=($2 ~ "[\052]") ? "yes" : "no";
+                boot_cell=($2 ~ "[\052]") ? "*" : "&nbsp;";
                 sub("[\052]", "", $0);
                 part_info_str=part_info_str"<tr class=\"infoarea\">";
-                for(i = 1; i <= NF; i++) {
+                for(i = 1; i <= fields; i++) {
                     if(i == 2 && $i != "Boot")
                         part_info_str=part_info_str"<td align=\"left\">"boot_cell"</td>";
                     part_info_str=part_info_str"<td align=\"left\">"$i"</td>";
