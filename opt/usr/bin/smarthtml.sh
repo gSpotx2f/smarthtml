@@ -398,7 +398,7 @@ MakeRRDGraph () {
         local attr graphstart rrd_graph_file units hrule
         for attr in $RRD_SMART_ATTRS
         do
-            if [ "$attr" = "smart194" ]; then
+            if [ "$attr" = "smart194" -o "$attr" = "smart190" ]; then
                 units="C"
                 hrule="HRULE:${TEMP_ALERT}${RRD_GRAPH_COLOR_TEMP_WARN}:Warning(${TEMP_ALERT})"
             else
