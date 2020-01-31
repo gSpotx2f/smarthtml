@@ -17,7 +17,7 @@ CGI_SUDO_USER="admin"
 
 ############################# Base config ##############################
 export NAME="smarthtml"
-export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/sbin"
+export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export LANG="en_US.UTF-8"
 export LANGUAGE="en"
 
