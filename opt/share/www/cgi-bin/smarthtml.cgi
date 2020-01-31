@@ -2,38 +2,50 @@
 
 ########################################################################
 #
-# This is a part of S.M.A.R.T.Html v1.0 (c) 2018
+# S.M.A.R.T.Html v1.0 (c) 2018
 #
-# Author:   gSpot at wl500g.info
-# License:  GPLv3
+# Author:       gSpot <https://github.com/gSpotx2f/smarthtml>
+# License:      GPLv3
 # Depends:      smartmontools
 # Recommends:   rrdtool, sendmail, openssl, sudo
 #
 ########################################################################
 
-export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/sbin:/opt/bin:/opt/sbin:/opt/usr/bin:/opt/usr/sbin"
+############################## Settings ################################
+CGI_USE_SUDO=0
+CGI_SUDO_USER="admin"
+
+############################# Base config ##############################
+export NAME="smarthtml"
+export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/sbin"
 export LANG="en_US.UTF-8"
-SEDCMD="sed"
-SMARTHTMLCMD="/opt/usr/bin/smarthtml.sh"
-SUDOUSER="admin"
-USE_SUDO=0
+export LANGUAGE="en"
+
+### External config
+CONFIG_FILE="/opt/etc/${NAME}.conf"
+[ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
+
+SED_CMD="sed"
+SMARTHTML_CMD="/opt/usr/bin/smarthtml.sh"
+
 SUDOCMD=`which sudo`
-if [ $USE_SUDO -eq 1 -a $? -eq 0 ]; then
-    SMARTHTMLCMD="${SUDOCMD} -u ${SUDOUSER} ${SMARTHTMLCMD}"
+if [ $CGI_USE_SUDO -eq 1 -a $? -eq 0 ]; then
+    SMARTHTML_CMD="${SUDOCMD} -u ${CGI_SUDO_USER} ${SMARTHTML_CMD}"
 fi
 
-eval `echo "${QUERY_STRING} " | $SEDCMD -e 's/[)(;\`\\]//g' -e 's/&/\; /g'`
+############################ Main section ##############################
+eval `echo "${QUERY_STRING} " | $SED_CMD -e 's/[)(;\`\\]//g' -e 's/&/\; /g'`
 printf "Content-type: text/html; charset=utf-8\n\n"
 
 case $call in
     refresh)
-        $SMARTHTMLCMD norrd
+        $SMARTHTML_CMD norrd
     ;;
     resetwarn)
-        $SMARTHTMLCMD resetwarn && $SMARTHTMLCMD norrd
+        $SMARTHTML_CMD resetwarn && $SMARTHTML_CMD norrd
     ;;
     resetcount)
-        $SMARTHTMLCMD resetcount && $SMARTHTMLCMD norrd
+        $SMARTHTML_CMD resetcount && $SMARTHTML_CMD norrd
     ;;
     *)
         echo "Error! Wrong call (${call})..."
