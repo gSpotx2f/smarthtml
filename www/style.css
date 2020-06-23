@@ -1,0 +1,748 @@
+/*
+========================================
+    Vars
+========================================
+*/
+
+:root {
+    --body-bg-color: #f7f7f7;
+    --section-bg-color: #fff;
+    --main-borders-color: #8d9daa;
+
+    --main-font-color: #434e58;
+    --invert-font-color: #f7f7f7;
+    --light-font-color: #5f6f7c;
+    --light-font-size: 0.95em;
+
+    --tabs-area-bg-color: #c1d6de;
+    --device-header-color: #5f6f7c;
+
+    --thrshld-color: #ff838b;
+    --thrshld-fonf-color: #fff;
+    --degr-color: #ffd186;
+    --lowdegr-color: #feffcf;
+    --impr-color: #c8ffe5;
+    --idle-color: #f7f7f7;
+    --nonzero-color: #fff3e8;
+    /*--excluded-color: #f7f7f7;*/
+
+    --tab-active-top-border-color: #ffa500;
+    --link-block-hover-bg: rgba(48, 151, 252, .1);
+}
+
+
+/*
+========================================
+    Main
+========================================
+*/
+
+/* CSS Reset */
+html, body, div, span, section,
+ul, li, nav, p, figure {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+body {
+    background-color: var(--body-bg-color);
+    color: var(--main-font-color);
+    font: normal 15px/21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+*,
+*:before,
+*:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+b, strong {
+    font-weight: bold;
+}
+
+#main-content {
+    width: 100%;
+    min-width: 960px;
+}
+
+footer {
+    margin-top: 20px;
+}
+
+
+/*
+========================================
+    Alignment
+========================================
+*/
+
+.left {
+    text-align: left;
+}
+
+.right {
+    text-align: right;
+}
+
+.center {
+    text-align: center;
+}
+
+
+/*
+========================================
+    Text
+========================================
+*/
+
+p {
+    margin: 10px 0;
+}
+
+em {
+    font-style: italic;
+}
+
+.hex {
+    font-size: 0.8em;
+    font-weight: 400;
+}
+
+
+/*
+========================================
+    Links
+========================================
+*/
+
+a {
+    text-decoration: none;
+    outline: none;
+    border-bottom: 1px dotted var(--main-font-color);
+    color: var(--main-font-color);
+}
+
+a:hover {
+    color: #042748;
+    border-bottom-color: #042748;
+}
+
+a:active {
+    color: #042748;
+    border-bottom-color: #042748;
+}
+
+
+/*
+========================================
+    Buttons
+========================================
+*/
+
+button {
+    padding: 4px 8px;
+    background-color: #748b9e;
+    color: var(--invert-font-color);
+    border: 2px solid #748b9e;
+    cursor: pointer;
+    transition: border-color .15s ease-in;
+}
+
+button::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+button:active {
+    -webkit-box-shadow: 0 0 8px rgba(30, 144, 255, 0.8);
+    -moz-box-shadow: 0 0 8px rgba(30, 144, 255, 0.8);
+    box-shadow: 0 0 8px rgba(30, 144, 255, 0.8);
+    outline: 0;
+    text-decoration: none;
+}
+
+button:focus {
+    outline: 1px solid var(--tab-active-top-border-color);
+}
+
+button:hover {
+    border-bottom-color: var(--tab-active-top-border-color);
+    outline: 0;
+    text-decoration: none;
+}
+
+
+/*
+========================================
+    Devices tabs
+========================================
+*/
+
+
+.tab-container *[data-tab] {
+    display: none;
+}
+
+.tabs-menu {
+    background-color: var(--tabs-area-bg-color);
+}
+
+.tabs-menu li {
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.tab-link {
+    display: inline-block;
+    padding: 2px 10px;
+    margin-left: 5px;
+    border-top: 2px solid var(--device-header-color);
+    border-bottom: 0;
+    border-left: 1px solid var(--device-header-color);
+    border-right: 1px solid var(--device-header-color);
+}
+
+.tab-link:not(.tab-link-active):hover {
+    background: var(--link-block-hover-bg);
+    transition: background, .25s ease-in;
+}
+
+.tab-link-active {
+    background-color: var(--device-header-color);
+    color: var(--invert-font-color);
+    border-top: 2px solid var(--tab-active-top-border-color);
+}
+
+.tab-link-active:hover {
+    color: var(--invert-font-color);
+}
+
+
+/*
+========================================
+    Device sections
+========================================
+*/
+
+.device-tab section {
+    width: 930px;
+    height: 100%;
+    margin: 20px 5px 0px 5px;
+    padding: 10px;
+    -webkit-box-shadow: 0 0 4px var(--device-header-color);
+    -moz-box-shadow: 0 0 4px var(--device-header-color);
+    box-shadow: 0 0 4px var(--device-header-color);
+    background: var(--section-bg-color);
+}
+
+.device-header {
+    position: relative;
+    width: 100%;
+    padding: 5px 0px;
+    text-align: center;
+    background-color: var(--device-header-color);
+    font-size: 1.3em;
+    color: var(--invert-font-color);
+    -webkit-box-shadow: 0 1px 2px var(--device-header-color);
+    -moz-box-shadow: 0 1px 2px var(--device-header-color);
+    box-shadow: 0 1px 2px var(--device-header-color);
+    -webkit-order: -10;
+    order: -10;
+}
+
+.tab-flex-container {
+    display: flex;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.section-header{
+    margin-bottom: 20px;
+    color: var(--light-font-color);
+    text-align: left;
+    font-size: var(--light-font-size);
+}
+
+
+/*
+========================================
+    Labels
+========================================
+*/
+
+.label {
+    display: inline-block;
+    padding: 0 4px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+*[data-smart-status="passed"] > span {
+    background-color: var(--impr-color);
+}
+
+*[data-smart-status="failed"] > span {
+    background-color: var(--thrshld-color);
+    color: var(--thrshld-fonf-color);
+}
+
+
+/*
+========================================
+    Percent bars
+========================================
+*/
+
+.percent-bar {
+    position: relative;
+    width: 100%;
+    min-width: 100px;
+    height: 18px;
+    border: 1px solid var(--main-borders-color);
+    text-align: center;
+}
+
+.percent-bar-line {
+    width: 0%;
+    height: 100%;
+    background-color: var(--tabs-area-bg-color);
+}
+
+.percent-bar::after {
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    right: 0;
+    left: 0;
+    text-align: center;
+    text-shadow: 0 0 2px #fff;
+    font-size: var(--light-font-size);
+    line-height: 1.25em;
+    color: var(--light-font-color);
+    content: attr(title);
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.percent-bar-warning {
+    background-color: var(--degr-color);
+}
+
+
+/*
+========================================
+    Tables
+========================================
+*/
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: var(--section-bg-color);
+    font-size: var(--light-font-size);
+    color: var(--light-font-color);
+}
+
+th, td {
+    padding: 4px;
+    vertical-align: middle;
+    text-align: left;
+    border: 0;
+    border-top: 1px solid var(--main-borders-color);
+    border-bottom: 1px solid var(--main-borders-color);
+    font-weight: inherit;
+}
+
+th {
+    padding-bottom: 8px;
+    border-top: 0;
+}
+
+caption {
+    margin: 10px 0 10px 1em;
+    text-align: left;
+    font-size: var(--light-font-size);
+    color: var(--light-font-color);
+}
+
+.two-cols-table td:nth-child(1) {
+    width: 33%;
+}
+
+
+.smart-table tbody td {
+    border: 0;
+    border-top: 4px solid var(--section-bg-color);
+}
+
+.smart-table thead th:nth-child(2) {
+    width: 25%;
+}
+
+.smart-table thead th:nth-child(6) {
+    width: 10%;
+}
+
+.smart-table thead th:nth-child(7) {
+    width: 16%;
+}
+
+.smart-table th,
+.smart-table td {
+    text-align: center;
+}
+
+.smart-table thead > tr:first-child th:nth-child(1),
+.smart-table td:nth-child(1) {
+    text-align: right;
+}
+
+.smart-table thead > tr:first-child th:nth-child(2),
+.smart-table td:nth-child(2) {
+    text-align: left;
+}
+
+/* RAW column */
+.smart-table th:nth-child(7),
+.smart-table td:nth-child(7) {
+    font-weight: bold;
+}
+
+tr[data-smart-change="thrshld"] {
+    background-color: var(--thrshld-color);
+    color: var(--thrshld-fonf-color);
+}
+
+tr[data-smart-change="thrshld"] a {
+    text-decoration: none;
+    outline: none;
+    border-bottom: 1px dotted var(--thrshld-fonf-color);
+    color: var(--thrshld-fonf-color)
+}
+
+tr[data-smart-change="thrshld"] td:nth-child(3),
+tr[data-smart-change="thrshld"] td:nth-child(5){
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+tr[data-smart-change="degr"] {
+    background-color: var(--degr-color);
+}
+
+tr[data-smart-change="lowdegr"] {
+    background-color: var(--lowdegr-color);
+}
+
+tr[data-smart-change="impr"] {
+    background-color: var(--impr-color);
+}
+
+tr[data-smart-change="idle"] {
+    background-color: var(--idle-color);
+}
+
+tr[data-smart-change="nonzero"] {
+    background-color: var(--nonzero-color);
+}
+/*
+tr[data-smart-change="excluded"] {
+    background-color: var(--excluded-color);
+}
+*/
+.scroll-container {
+    width: 100%;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.scroll-container > table {
+    margin: 0 auto 0 auto;
+}
+
+
+/*
+========================================
+    Tooltips
+========================================
+*/
+
+*[data-tooltip] {
+    cursor: help;
+}
+
+.tooltip-cell-hover {
+    background-color: rgba(0, 0, 0, .05);
+    transition: background-color .25s ease-in;
+}
+
+.tooltip {
+    position: absolute;
+    z-index: 1000;
+    padding: 2px 5px;
+    font-size: 0.9em;
+    white-space: pre;
+    -webkit-box-shadow: 0 0 2px #ccc;
+    -moz-box-shadow: 0 0 2px #ccc;
+    box-shadow: 0 0 2px #ccc;
+    border-radius: 3px;
+    background-color: #fff;
+    opacity: 0;
+    transition: opacity .25s ease-in;
+}
+
+
+/*
+========================================
+    SMART status
+========================================
+*/
+
+.smart-status {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+
+/*
+========================================
+    SMART graphs
+========================================
+*/
+
+.graph-container > figure {
+    min-height: 360px;
+    padding-top: 10px;
+    border-top: 1px solid var(--main-borders-color);
+}
+
+.graph-container li {
+    display: inline;
+}
+
+.graph-container a:not([data-graph-link-selected="true"]):hover {
+    background-color: var(--link-block-hover-bg);
+    border-color: var(--main-borders-color);
+    transition: background-color .25s ease-in;
+}
+
+.attrs-links {
+    margin-bottom: 20px;
+}
+
+.attrs-links a.graph-attr-link {
+    display: inline-block;
+    margin-top: 5px;
+    margin-left: 5px;
+    padding: 5px;
+    border-top: 2px solid var(--main-borders-color);
+    border-bottom: 1px solid var(--main-borders-color);
+    border-left: 1px solid var(--main-borders-color);
+    border-right: 1px solid var(--main-borders-color);
+}
+
+.attrs-links a[data-graph-link-selected="true"] {
+    border-top-color: var(--tab-active-top-border-color);
+    background-color: var(--device-header-color);
+    color: var(--invert-font-color);
+}
+
+.graph-interval-link {
+    display: inline-block;
+    position: relative;
+    top: 1px;
+    height: 2em;
+    margin-left: 5px;
+    padding: 5px 6px 4px 6px;
+    border-top: 2px solid var(--main-borders-color);
+    border-bottom: 1px solid transparent;
+    border-left: 1px solid var(--main-borders-color);
+    border-right: 1px solid var(--main-borders-color);
+    font-size: 0.95em;
+    line-height: 1.25em;
+}
+
+a.graph-interval-link[data-graph-link-selected="true"] {
+    border-bottom-color: var(--section-bg-color);
+    border-top-color: var(--tab-active-top-border-color);
+}
+
+
+/*
+========================================
+    Alert notice
+========================================
+*/
+
+#alert_panel {
+    position: relative;
+    width: 100%;
+    text-align: center;
+    padding: 5px 0px 5px 0px;
+    border: 0;
+    border-bottom: 1px solid var(--main-borders-color);
+}
+
+.degr {
+    background-color: var(--degr-color);
+}
+
+.thrshld {
+    background-color: var(--thrshld-color);
+    color: var(--thrshld-fonf-color);
+}
+
+
+/*
+========================================
+    CGI panel
+========================================
+*/
+
+#cgi_panel {
+    position: relative;
+    width: 100%;
+    text-align: right;
+    padding: 5px;
+    border: 0px;
+    background-color: #c1d6de;
+}
+
+#cgi_panel > button {
+    margin-left: 1px;
+}
+
+.screen-locker {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: var(--body-bg-color);
+    text-align: center;
+    font-weight: bold;
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.screen-locker > span {
+    position: relative;
+    top: 5px;
+    padding: 2px 5px;
+    background-color: var(--section-bg-color);
+    -webkit-box-shadow: 0 0 4px var(--device-header-color);
+    -moz-box-shadow: 0 0 4px var(--device-header-color);
+    box-shadow: 0 0 4px var(--device-header-color);
+}
+
+.screen-error {
+    position: relative;
+    top: 20vh;
+    width: 100%;
+    background-color: var(--section-bg-color);
+    text-align: center;
+    font-weight: bold;
+    -webkit-box-shadow: 0 0 4px var(--device-header-color);
+    -moz-box-shadow: 0 0 4px var(--device-header-color);
+    box-shadow: 0 0 4px var(--device-header-color);
+}
+
+
+/*
+========================================
+    SCT Temp
+========================================
+*/
+
+.graph-container {
+    width: 100%;
+    text-align: center;
+}
+
+.sct-temp-graph-container {
+    position: relative;
+    padding: 10px 0;
+    text-align: center;
+}
+
+.sct-temp-graph {
+    margin: 0 auto 0 auto;
+}
+
+tr[data-sct-table-warn="warning"] {
+    background-color: var(--degr-color);
+}
+
+tr[data-sct-table-warn="critical"] {
+    background-color: var(--thrshld-color);
+    color: var(--thrshld-fonf-color);
+}
+
+
+/*
+========================================
+    SCT Temp SVG
+========================================
+*/
+
+.svg-temp-line {
+    stroke: black;
+    stroke-width: 1;
+    opacity: 0.1;
+}
+
+.svg-temp-labels {
+    fill: #eee;
+    font-size: 15px;
+    text-shadow: 1px 1px 1px #000;
+}
+
+.svg-temp-graph {
+    fill: var(--tabs-area-bg-color);
+    fill-opacity: 1;
+    stroke: var(--device-header-color);
+    stroke-width: 1
+}
+
+.svg-temp-warning {
+    stroke: #ffa500;
+    stroke-width: 1;
+}
+
+.svg-temp-critical {
+    stroke: var(--thrshld-color);
+    stroke-width: 1;
+}
+
+.svg-time-line {
+    stroke: black;
+    stroke-width: 1;
+    opacity: 0.1;
+}
+
+.svg-time-labels {
+    fill: var(--main-borders-color);
+    opacity: 0.6;
+    font-size: 13px;
+    font-weight: bold;
+    writing-mode: vertical-rl;
+}

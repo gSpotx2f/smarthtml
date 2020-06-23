@@ -1,0 +1,38 @@
+#!/bin/sh
+
+#
+#   $1 - message file
+#   $2 - [debug]
+#
+
+### Mail settings:
+MAIL_RECIPIENT="email@gmail.com"
+MAIL_SENDER="email@gmail.com"
+MAIL_LOGIN="email@gmail.com"
+MAIL_PASSWORD="password"
+MAIL_SMTP="smtp.gmail.com"
+MAIL_SMTP_PORT=587
+
+#export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export LANG="en_US.UTF-8"
+export LANGUAGE="en"
+export HOSTNAME="$HOSTNAME"
+
+MTA_MSG_FILE="$1"
+DEBUG="$2"
+DEBUG_KEY=
+if [ -n "$DEBUG" ]; then
+    DEBUG_KEY="-v"
+fi
+
+AWK_CMD="awk"
+MTA=`which msmtp`
+if [ $? -ne 0 ]; then
+    echo " Error! MTA doesn't exists..." >&2
+    exit 1
+fi
+MTA_CMD="${MTA} --host=${MAIL_SMTP} --auth=login --tls=on --port=${MAIL_SMTP_PORT} --user=${MAIL_LOGIN} --from=${MAIL_SENDER} ${DEBUG_KEY}"
+
+$AWK_CMD 'BEGIN {
+        printf "Subject: [S.M.A.R.T.] Warning: %s\n\n", ENVIRON["HOSTNAME"]
+    } {print $0}' $MTA_MSG_FILE | ${MTA_CMD} --passwordeval="echo -n $MAIL_PASSWORD" "$MAIL_RECIPIENT"
