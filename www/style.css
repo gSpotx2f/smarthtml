@@ -124,18 +124,7 @@ em {
 a {
     text-decoration: none;
     outline: none;
-    border-bottom: 1px dotted var(--main-font-color);
     color: var(--main-font-color);
-}
-
-a:hover {
-    color: #042748;
-    border-bottom-color: #042748;
-}
-
-a:active {
-    color: #042748;
-    border-bottom-color: #042748;
 }
 
 
@@ -184,8 +173,7 @@ button:hover {
 ========================================
 */
 
-
-.tab-container *[data-tab] {
+.tabs-container *[data-tab] {
     display: none;
 }
 
@@ -217,10 +205,6 @@ button:hover {
     background-color: var(--device-header-color);
     color: var(--invert-font-color);
     border-top: 2px solid var(--tab-active-top-border-color);
-}
-
-.tab-link-active:hover {
-    color: var(--invert-font-color);
 }
 
 
@@ -427,6 +411,21 @@ caption {
     font-weight: bold;
 }
 
+/* Links */
+.smart-table a {
+    border-bottom: 1px dotted var(--main-font-color);
+}
+
+.smart-table a:hover {
+    color: #042748;
+    border-bottom-color: #042748;
+}
+
+.smart-table a:active {
+    color: #042748;
+    border-bottom-color: #042748;
+}
+
 tr[data-smart-change="thrshld"] {
     background-color: var(--thrshld-color);
     color: var(--thrshld-fonf-color);
@@ -513,6 +512,34 @@ tr[data-smart-change="excluded"] {
 
 /*
 ========================================
+    Top Scroll
+========================================
+*/
+
+.top-scroll-container {
+    position: fixed;
+    top: calc(50% - 2.25em);
+}
+
+.top-scroll-container > a {
+    margin-bottom: 0.5em;
+}
+
+.top-scroll-btn {
+    display: block;
+    font-size: 2em;
+    outline: none;
+    opacity: 0.5;
+}
+
+.top-scroll-btn:hover {
+    color: #000;
+    transition: color .25s ease-in;
+}
+
+
+/*
+========================================
     SMART status
 ========================================
 */
@@ -541,7 +568,6 @@ tr[data-smart-change="excluded"] {
 
 .graph-container a:not([data-graph-link-selected="true"]):hover {
     background-color: var(--link-block-hover-bg);
-    border-color: var(--main-borders-color);
     transition: background-color .25s ease-in;
 }
 

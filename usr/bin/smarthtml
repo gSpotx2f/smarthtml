@@ -280,7 +280,7 @@ cat << EOF >> $HTML_OUTPUT
     <noscript><p class="center"><strong>You need to enable JavaScript</strong></p></noscript>
     <div id="main-content">
         <nav id="tabs-nav"></nav>
-        <div class="tab-container">
+        <div class="tabs-container">
 EOF
 }
 

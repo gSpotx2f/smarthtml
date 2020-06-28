@@ -87,6 +87,36 @@ document.addEventListener('mouseover', function(ev) {
 document.addEventListener('mouseout', hideTooltip);
 
 
+function addTopScroll() {
+    let tsContainer = document.createElement('div');
+        tsContainer.className = 'top-scroll-container';
+
+    let up = document.createElement('a');
+        up.href = '#';
+        up.textContent = '▲';
+        up.className = 'top-scroll-btn';
+        up.addEventListener('click', ev => {
+            ev.preventDefault();
+            window.scrollTo(0, 0);
+        });
+
+    let down = document.createElement('a');
+        down.href = '#';
+        down.textContent = '▼';
+        down.className = 'top-scroll-btn';
+        down.addEventListener('click', ev => {
+            ev.preventDefault();
+            window.scrollTo(0, Math.max(
+                document.body.scrollHeight, document.documentElement.scrollHeight,
+                document.body.offsetHeight, document.documentElement.offsetHeight,
+                document.body.clientHeight, document.documentElement.clientHeight
+            ))
+        });
+
+    tsContainer.append(up, down);
+    document.body.append(tsContainer);
+}
+
 function initPercentBars() {
     let barContainers = document.querySelectorAll('*[data-bar]');
     for(let elem of barContainers) {
@@ -108,11 +138,11 @@ function initPercentBars() {
 }
 
 function showAlertPanel(style, msg) {
-    document.body.insertAdjacentHTML("afterBegin", '<div id="alert_panel" class="' + style + '">' + msg + '</div>');
+    document.getElementById('main-content').insertAdjacentHTML("afterBegin", '<div id="alert_panel" class="' + style + '">' + msg + '</div>');
 }
 
 function showCgiPanel() {
-    document.body.insertAdjacentHTML("afterBegin", `<div id="cgi_panel">
+    document.getElementById('main-content').insertAdjacentHTML("afterBegin", `<div id="cgi_panel">
         <button onclick="sendCgiRequest('refresh', false); return false">Check now</button><!--
      --><button onclick="sendCgiRequest('resetwarn', false); return false">Reset warnings</button><!--
      --><button onclick="sendCgiRequest('resetcount', 'All S.M.A.R.T attribute counters will be reset...'); return false">Reset counters</button>
@@ -133,6 +163,7 @@ function checkAlert() {
 function showGraph(device, attrId) {
     let container = document.querySelector('.graph-container[data-graph-device="' + device + '"');
     if(container) {
+
         let attrsLinks = container.querySelector('.attrs-links');
 
         graphAttrsLinksObject[device].forEach(a => {
@@ -159,7 +190,6 @@ function switchGraph(device, attrId, interval) {
         let imgContainer =  container.querySelector('figure');
             imgContainer.innerHTML = null;
             imgContainer.append(graphImgsObject[device][attrId][interval]);
-
 
         for(let a of graphAttrsLinksObject[device]) {
             if(a.hasAttribute('data-graph-link-selected')) {
@@ -293,10 +323,10 @@ async function sendCgiRequest(call, isConfirm) {
 
 function switchTab(tabLink) {
     let tabId = tabLink.dataset.tab;
-    let currTab = document.querySelector('.tab-container *[data-tab="' + tabId + '"]');
+    let currTab = document.querySelector('.tabs-container *[data-tab="' + tabId + '"]');
 
     if(currTab) {
-        document.querySelectorAll('.tab-container *[data-tab]').forEach(e => e.style.display = 'none');
+        document.querySelectorAll('.tabs-container *[data-tab]').forEach(e => e.style.display = 'none');
         currTab.style.display = 'block';
         document.querySelectorAll('.tab-link').forEach(e => e.classList.remove('tab-link-active'));
         tabLink.classList.add('tab-link-active');
@@ -310,7 +340,7 @@ function switchTabHandler(ev) {
 }
 
 function initTabs() {
-    let panes = Array.from(document.querySelectorAll('.tab-container *[data-tab]'));
+    let panes = Array.from(document.querySelectorAll('.tabs-container *[data-tab]'));
     panes.sort((a, b) => a.dataset.tab > b.dataset.tab);
 
     if(panes.length === 0) {
@@ -529,6 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showCgiPanel();
     };
     checkAlert();
+    addTopScroll();
 });
 
 window.addEventListener('load', () => {
