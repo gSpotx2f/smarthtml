@@ -457,7 +457,7 @@ MakeRRDGraph() {
     fi
 }
 
-GetPartitionsInfo() {
+MakePartitionsInfo() {
     local _partition
 
     for _partition in $($FDISK_CMD $FDISK_PARAMS $1 | $AWK_CMD '
@@ -561,7 +561,7 @@ GetPartitionsInfo() {
     echo "</tbody></table></section>" >> $HTML_OUTPUT
 }
 
-GetDeviceInfo() {
+MakeDevicesInfo() {
     local _devices_counter=0 _device_path _device _db_file _log_file _device_error=0 _attr
 
     for _device_path in $DEVICES
@@ -1349,7 +1349,7 @@ GetDeviceInfo() {
 
         }' && mv -f ${_db_file}.tmp $_db_file)
 
-        [ $USE_FDISK = "1" ] && GetPartitionsInfo $_device_path
+        [ $USE_FDISK = "1" ] && MakePartitionsInfo $_device_path
 
         echo "</div></section>" >> $HTML_OUTPUT;
 
@@ -1390,7 +1390,7 @@ MainRun() {
 
     [ -e "$MTA_MSG_FILE" ] && rm -f $MTA_MSG_FILE
     MakeHtmlHeader
-    GetDeviceInfo $1
+    MakeDevicesInfo $1
     MakeHtmlFooter
     [ $USE_MAIL = "1" ] && RunMailer &> /dev/null
 }
