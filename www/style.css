@@ -17,6 +17,8 @@
     --tabs-area-bg-color: #c1d6de;
     --device-header-color: #5f6f7c;
 
+    --shadow-color: #5f6f7c;
+
     --thrshld-color: #ff838b;
     --thrshld-fonf-color: #fff;
     --degr-color: #ffd186;
@@ -219,9 +221,9 @@ button:hover {
     height: 100%;
     margin: 20px 5px 0px 5px;
     padding: 10px;
-    -webkit-box-shadow: 0 0 4px var(--device-header-color);
-    -moz-box-shadow: 0 0 4px var(--device-header-color);
-    box-shadow: 0 0 4px var(--device-header-color);
+    -webkit-box-shadow: 0 0 4px var(--shadow-color);
+    -moz-box-shadow: 0 0 4px var(--shadow-color);
+    box-shadow: 0 0 4px var(--shadow-color);
     background: var(--section-bg-color);
 }
 
@@ -233,9 +235,9 @@ button:hover {
     background-color: var(--device-header-color);
     font-size: 1.3em;
     color: var(--invert-font-color);
-    -webkit-box-shadow: 0 1px 2px var(--device-header-color);
-    -moz-box-shadow: 0 1px 2px var(--device-header-color);
-    box-shadow: 0 1px 2px var(--device-header-color);
+    -webkit-box-shadow: 0 1px 2px var(--shadow-color);
+    -moz-box-shadow: 0 1px 2px var(--shadow-color);
+    box-shadow: 0 1px 2px var(--shadow-color);
     -webkit-order: -10;
     order: -10;
 }
@@ -650,7 +652,7 @@ a.graph-interval-link[data-graph-link-selected="true"] {
     text-align: right;
     padding: 5px;
     border: 0px;
-    background-color: #c1d6de;
+    background-color: var(--tabs-area-bg-color);
 }
 
 #cgi_panel > button {
@@ -675,9 +677,9 @@ a.graph-interval-link[data-graph-link-selected="true"] {
     top: 5px;
     padding: 2px 5px;
     background-color: var(--section-bg-color);
-    -webkit-box-shadow: 0 0 4px var(--device-header-color);
-    -moz-box-shadow: 0 0 4px var(--device-header-color);
-    box-shadow: 0 0 4px var(--device-header-color);
+    -webkit-box-shadow: 0 0 4px var(--shadow-color);
+    -moz-box-shadow: 0 0 4px var(--shadow-color);
+    box-shadow: 0 0 4px var(--shadow-color);
 }
 
 .screen-error {
@@ -687,9 +689,9 @@ a.graph-interval-link[data-graph-link-selected="true"] {
     background-color: var(--section-bg-color);
     text-align: center;
     font-weight: bold;
-    -webkit-box-shadow: 0 0 4px var(--device-header-color);
-    -moz-box-shadow: 0 0 4px var(--device-header-color);
-    box-shadow: 0 0 4px var(--device-header-color);
+    -webkit-box-shadow: 0 0 4px var(--shadow-color);
+    -moz-box-shadow: 0 0 4px var(--shadow-color);
+    box-shadow: 0 0 4px var(--shadow-color);
 }
 
 
