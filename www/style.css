@@ -53,7 +53,7 @@ ul, li, nav, p, figure {
 body {
     background-color: var(--body-bg-color);
     color: var(--main-font-color);
-    font: normal 15px/21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: normal 15px/21px Arial, sans-serif;
 }
 
 *,
