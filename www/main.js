@@ -411,7 +411,7 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
 
     let svgWidth = 900;
     let svgHeight = 300;
-    let tempValueMul = (tempDiff >= 70) ? 3 : Math.round(svgHeight / (tempDiff + 20));  // 1°C = "tempValueMul"px
+    let tempValueMul = (tempDiff >= 60) ? 3 : Math.round(svgHeight / (tempDiff + 20));  // 1°C = "tempValueMul"px
     let tempMinimalValue = (tempMin > 10) ? tempMin - 10 : 0;
     let tempAxisStep = (tempDiff >= 60) ? 6 : (tempDiff >= 30) ? 4 : 2;
     let timeAxisStep = svgWidth / dataSize;
