@@ -733,9 +733,9 @@ tr[data-sct-table-warn="critical"] {
 */
 
 .svg-temp-line {
-    stroke: black;
+    stroke: var(--main-borders-color);
     stroke-width: 1;
-    opacity: 0.1;
+    opacity: 0.25;
 }
 
 .svg-temp-labels {
@@ -762,9 +762,9 @@ tr[data-sct-table-warn="critical"] {
 }
 
 .svg-time-line {
-    stroke: black;
+    stroke: var(--main-borders-color);
     stroke-width: 1;
-    opacity: 0.1;
+    opacity: 0.25;
 }
 
 .svg-time-labels {

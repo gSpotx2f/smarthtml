@@ -8,7 +8,7 @@
 #
 ###############################################################################
 
-#export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export NAME="smarthtml"
 export LANG="en_US.UTF-8"
 export LANGUAGE="en"

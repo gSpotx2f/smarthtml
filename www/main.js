@@ -163,7 +163,6 @@ function checkAlert() {
 function showGraph(device, attrId) {
     let container = document.querySelector('.graph-container[data-graph-device="' + device + '"');
     if(container) {
-
         let attrsLinks = container.querySelector('.attrs-links');
 
         graphAttrsLinksObject[device].forEach(a => {
@@ -390,6 +389,13 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
 
     let intervalSec = logInterval * 60;
     let dataUnits = [];
+    let tempMin = tempData.reduce(
+        (min, current) => (current < min && current !== null) ? current : min,
+        Infinity);
+    let tempMax = tempData.reduce(
+        (max, current) => (current > max && current !== null) ? current : max,
+        -Infinity);
+    let tempDiff = tempMax - tempMin;
 
     let i = dataSize - 1;
     while(i >= 0) {
@@ -405,12 +411,11 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
 
     let svgWidth = 900;
     let svgHeight = 300;
-    let tempValueMul = 3;                               // 1C == 3px
-    let tempOffset = 0;                                 // lowest temp value: 0C
-    let tempStep = 5;                                   // 5C step
-    let timeStep = svgWidth / dataSize;
-    let timeLineInterval = Math.ceil(dataSize / 32);    // 4 intervals (5 x 4 = 20 min)
-
+    let tempValueMul = (tempDiff >= 70) ? 3 : Math.round(svgHeight / (tempDiff + 20));  // 1°C = "tempValueMul"px
+    let tempMinimalValue = (tempMin > 10) ? tempMin - 10 : 0;
+    let tempAxisStep = (tempDiff >= 60) ? 6 : (tempDiff >= 30) ? 4 : 2;
+    let timeAxisStep = svgWidth / dataSize;
+    let timeAxisInterval = Math.ceil(dataSize / 32);
     let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('width', '100%');
         svg.setAttribute('height', '100%');
@@ -424,9 +429,9 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
 
     for(let i = 0; i < dataSize; i++) {
         tempPoints.push([
-            i * timeStep,
+            i * timeAxisStep,
             (dataUnits[i][1] != null) ?
-                (svgHeight - (dataUnits[i][1] - tempOffset) * tempValueMul) :
+                (svgHeight - (dataUnits[i][1] - tempMinimalValue) * tempValueMul) :
                     svgHeight * 2
         ]);
     };
@@ -437,24 +442,24 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
     // temperature warning
     let lineW = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         lineW.setAttribute('x1', 0);
-        lineW.setAttribute('y1', svgHeight - (diskTempWarning - tempOffset) * tempValueMul);
+        lineW.setAttribute('y1', svgHeight - (diskTempWarning - tempMinimalValue) * tempValueMul);
         lineW.setAttribute('x2', '100%');
-        lineW.setAttribute('y2', svgHeight - (diskTempWarning - tempOffset) * tempValueMul);
+        lineW.setAttribute('y2', svgHeight - (diskTempWarning - tempMinimalValue) * tempValueMul);
         lineW.setAttribute('class', 'svg-temp-warning');
     svg.appendChild(lineW);
 
     // temperature critical
     let lineC = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         lineC.setAttribute('x1', 0);
-        lineC.setAttribute('y1', svgHeight - (diskTempCritical - tempOffset) * tempValueMul);
+        lineC.setAttribute('y1', svgHeight - (diskTempCritical - tempMinimalValue) * tempValueMul);
         lineC.setAttribute('x2', '100%');
-        lineC.setAttribute('y2', svgHeight - (diskTempCritical - tempOffset) * tempValueMul);
+        lineC.setAttribute('y2', svgHeight - (diskTempCritical - tempMinimalValue) * tempValueMul);
         lineC.setAttribute('class', 'svg-temp-critical');
     svg.appendChild(lineC);
 
     // time labels
     let j = 0;
-    for(let i = 0; i < svgWidth; i += timeStep * timeLineInterval) {
+    for(let i = 0; i < svgWidth; i += timeAxisStep * timeAxisInterval) {
         let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', i);
             line.setAttribute('y1', 0);
@@ -466,7 +471,7 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
             text.setAttribute('x', i + 6);
             text.setAttribute('y', 0);
             text.setAttribute('class', 'svg-time-labels');
-            if(i >= 2 * timeStep * timeLineInterval) {
+            if(i >= 2 * timeAxisStep * timeAxisInterval) {
                 text.appendChild(document.createTextNode(
                     toDD(dataUnits[j][2].getDate()) + '.' +
                     toDD(dataUnits[j][2].getMonth() + 1) + ' ' +
@@ -474,7 +479,7 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
                     toDD(dataUnits[j][2].getMinutes())
                 ));
             };
-            j += timeLineInterval;
+            j += timeAxisInterval;
         svg.appendChild(text);
         if(j >= dataSize) {
             break;
@@ -483,7 +488,7 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
 
     // temperature labels
     let c = 0;
-    for(let i = svgHeight; i > 0; i -= tempValueMul * tempStep) {
+    for(let i = svgHeight; i > 0; i -= tempValueMul * tempAxisStep) {
         let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', 0);
             line.setAttribute('y1', i);
@@ -496,11 +501,19 @@ function createSctTemp(device, dataSize, logInterval, deviceTime,
             text.setAttribute('y', i - 3);
             text.setAttribute('class', 'svg-temp-labels');
             if(c % 2 === 0) {
-                text.appendChild(document.createTextNode(((svgHeight - i) / tempValueMul) + tempOffset + ' °C'));
+                text.appendChild(document.createTextNode(((svgHeight - i) / tempValueMul) + tempMinimalValue + ' °C'));
             };
         svg.appendChild(text);
         c++;
     };
+
+    // temperature min/max, log interval
+    let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', svgWidth / 3);
+        text.setAttribute('y', svgHeight - 10);
+        text.setAttribute('style', 'fill:#eee; font-family:monospace; font-size:12px; text-shadow:1px 1px 1px #000');
+        text.appendChild(document.createTextNode(`Interval:${logInterval}m Tmin:${tempMin}°C Tmax:${tempMax}°C`));
+    svg.appendChild(text);
 
     let svgContainer = document.createElement('div');
         svgContainer.className = 'sct-temp-graph';
