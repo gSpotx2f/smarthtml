@@ -980,13 +980,13 @@ MakeDevicesInfo() {
             };
         };
 
-        function writeSmartErrorLog( _index, _lt_hours, _err_desc) {
+        function writeSmartErrorLog( _lt_number, _index, _lt_hours, _err_desc) {
             _index = 0;
             while(1) {
                 _lt_number = smart_errors_array[_index ".error_number"];
                 _lt_hours = smart_errors_array[_index ".lifetime_hours"];
                 _err_desc = smart_errors_array[_index ".error_description"];
-                if(_lt_hours == "") {
+                if(_lt_number == "") {
                     break;
                 };
                 printf "<tr><td>%s</td><td>%s</td><td>%s</td></tr>", _lt_number, _lt_hours, _err_desc >>ENVIRON["HTML_OUTPUT"];
