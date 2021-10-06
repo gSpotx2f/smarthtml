@@ -983,12 +983,13 @@ MakeDevicesInfo() {
         function writeSmartErrorLog( _index, _lt_hours, _err_desc) {
             _index = 0;
             while(1) {
+                _lt_number = smart_errors_array[_index ".error_number"];
                 _lt_hours = smart_errors_array[_index ".lifetime_hours"];
                 _err_desc = smart_errors_array[_index ".error_description"];
                 if(_lt_hours == "") {
                     break;
                 };
-                printf "<tr><td>%s</td><td>%s</td></tr>", _lt_hours, _err_desc >>ENVIRON["HTML_OUTPUT"];
+                printf "<tr><td>%s</td><td>%s</td><td>%s</td></tr>", _lt_number, _lt_hours, _err_desc >>ENVIRON["HTML_OUTPUT"];
                 _index++;
             };
         };
@@ -1130,7 +1131,7 @@ MakeDevicesInfo() {
             };
 
             # SMART error log
-            if($0 ~ /^json\.ata_smart_error_log\.summary\.table\[[0-9]+\]\.(lifetime_hours|error_description)/) {
+            if($0 ~ /^json\.ata_smart_error_log\.summary\.table\[[0-9]+\]\.(error_number|lifetime_hours|error_description)/) {
                 match($0, /\[[0-9]+\]/);
                 num = substr($0, RSTART + 1, RLENGTH - 2);
                 param = substr($0, RSTART + RLENGTH);
@@ -1260,8 +1261,10 @@ MakeDevicesInfo() {
                 print "<section id=\"smart-error-log\"> \
                     <header class=\"section-header\">S.M.A.R.T. Error Log</header> \
                     <div class=\"scroll-container\"> \
-                        <table class=\"two-cols-table\"><thead> \
-                        <tr><th scope=\"col\">Lifetime hours</th><th scope=\"col\">Description</th></tr> \
+                        <table class=\"smart-errors-table\"><thead> \
+                        <tr><th scope=\"col\">Error number</th> \
+                        <th scope=\"col\">Lifetime hours</th> \
+                        <th scope=\"col\">Description</th></tr> \
                     </thead><tbody></div>" >>ENVIRON["HTML_OUTPUT"];
                 writeSmartErrorLog();
                 print "</tbody></table></section>" >>ENVIRON["HTML_OUTPUT"];

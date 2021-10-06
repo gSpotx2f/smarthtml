@@ -413,6 +413,14 @@ caption {
     font-weight: bold;
 }
 
+.smart-errors-table thead th:nth-child(1) {
+    width: 16%;
+}
+
+.smart-errors-table thead th:nth-child(2) {
+    width: 17%;
+}
+
 /* Links */
 .smart-table a {
     border-bottom: 1px dotted var(--main-font-color);
