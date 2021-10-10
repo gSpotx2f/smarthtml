@@ -18,6 +18,7 @@ export HOSTNAME="$HOSTNAME"
 
 ### External config
 CONFIG_FILE="/opt/etc/${NAME}.conf"
+
 ### Data directory
 SCRIPT_DATA_DIR="/opt/var/${NAME}"
 ### Email script
@@ -112,7 +113,7 @@ fi
 
 DB_DIR="${SCRIPT_DATA_DIR}/db"
 LOG_DIR="${SCRIPT_DATA_DIR}/log"
-export MTA_MSG_FILE="${SCRIPT_DATA_DIR}/email"
+export MAILER_MSG_FILE="${SCRIPT_DATA_DIR}/message"
 export HTML_OUTPUT="${HTML_DIR}/smart.html"
 RRD_DB_DIR="${SCRIPT_DATA_DIR}/rrd"
 RRD_DB_EXT="rrd"
@@ -458,14 +459,28 @@ MakeRRDGraph() {
 }
 
 MakePartitionsInfo() {
+    local _partitions_str
     local _partition
 
-    for _partition in $($FDISK_CMD $FDISK_PARAMS $1 | $AWK_CMD '
+    _partitions_str=$($FDISK_CMD $FDISK_PARAMS $1 | $AWK_CMD '
         BEGIN {
+            fields_titles[1] = "Device";
+            fields_titles[2] = "Start";
+            fields_titles[3] = "End";
+            fields_titles[4] = "Sectors";
+            fields_titles[5] = "Size";
+            fields_titles[6] = "Type";
+            fields = length(fields_titles);
+            partitons_counter = 0;
             partitions_str = "";
             disk_info_html = "";
-            partition_html = "";
-            fields = 0;
+            is_devider = 0;
+
+            partition_html = partition_html "<thead><tr>";
+            for(i in fields_titles) {
+                partition_html = partition_html "<th>" fields_titles[i] "</th>";
+            };
+            partition_html = partition_html "</tr></thead> \n<tbody>";
         }
 
         function concatRestFields(target_field, sep,  _rest, _str) {
@@ -477,62 +492,70 @@ MakePartitionsInfo() {
         };
 
         {
-            is_header = 0;
-            if($0 ~ /^([ ]*(Device|Slice|[\057]dev[\057]))/) {
-                if($0 ~ /^[ ]*(Device|Slice)/) {
-                    fields = NF;
-                    is_header = 1;
-                }
-                else {
-                    partitions_str = (length(partitions_str) == 0) ? $1 : partitions_str " " $1;
-                    concatRestFields(fields, " ");
-                };
+            if($0 ~ /^([ ]*[\057]dev[\057])/) {
+                partitions_str = (length(partitions_str) == 0) ? $1 : partitions_str " " $1;
+                concatRestFields(fields, " ");
 
-                partition_html = (is_header == 1) ? partition_html "<thead><tr>" :
-                    partition_html "<tr>";
                 curr_fields = (NF < fields) ? NF : fields;
 
+                partition_html = partition_html "<tr>";
                 for(i = 1; i <= curr_fields; i++) {
-                    partition_html = (is_header == 1) ? partition_html "<th>" $i "</th>" :
-                        partition_html "<td>" $i "</td>";
+                    partition_html = partition_html "<td>" $i "</td>";
                 };
+                partition_html = partition_html "</tr> \n";
 
-                partition_html = (is_header == 1) ? partition_html "</tr></thead><tbody>" :
-                    partition_html "</tr>";
+                partitons_counter++;
             }
-            else if(length($0) > 1) {
+            else if(length($0) == 0) {
+                is_devider = 1;
+            }
+            else if(is_devider == 1) {
+                is_devider = 0;
+                next;
+            }
+            else {
                 split($0, str_array, ":");
-                disk_info_html = disk_info_html "<tr><td>" str_array[1] ":</td><td>" str_array[2] "</td></tr>";
+                disk_info_html = disk_info_html "<tr><td>" str_array[1] ":</td><td>" str_array[2] "</td></tr> \n";
             };
         }
 
         END {
-            printf "<section id=\"fdisk\"> \
-                <header class=\"section-header\">Disk</header> \
-                <table class=\"two-cols-table\"> \
-                    <tbody>%s</tbody> \
-                </table></section>\n \
-            <section id=\"partitions\"> \
-                <header class=\"section-header\">Partitions</header> \
-                <table>%s</tbody></table></section>\n \
-            <section id=\"filesystems\"> \
-                <header class=\"section-header\">Filesystems</header> \
-                    <table><thead><tr> \
-                        <th>Filesystem</th> \
-                        <th>Type</th> \
-                        <th>Size</th> \
-                        <th>Used</th> \
-                        <th>Available</th> \
-                        <th>Use %%</th> \
-                        <th>Mounted on</th> \
-                    </tr></thead><tbody>",
-            disk_info_html, partition_html >>ENVIRON["HTML_OUTPUT"];
+            if(partitons_counter == 0) {
+                partition_html =  partition_html "<tr><td colspan=\"" fields "\" class=\"center\">No available partitions</td></tr>";
+            };
+
+            printf "<section id=\"fdisk\"> \n\
+                <header class=\"section-header\">Disk</header> \n\
+                <table class=\"two-cols-table\"> \n\
+                    <tbody>%s</tbody> \n\
+                </table></section> \n\
+            <section id=\"partitions\"> \n\
+                <header class=\"section-header\">Partitions</header> \n\
+                <table>%s</tbody></table> \n</section> \n\
+            <section id=\"filesystems\"> \n\
+                <header class=\"section-header\">Mounted filesystems</header> \n\
+                    <table><thead><tr> \n\
+                        <th>Filesystem</th> \n\
+                        <th>Type</th> \n\
+                        <th>Size</th> \n\
+                        <th>Used</th> \n\
+                        <th>Available</th> \n\
+                        <th>Use %%</th> \n\
+                        <th>Mounted on</th> \n\
+                    </tr></thead><tbody> \n",
+                disk_info_html,
+                partition_html >>ENVIRON["HTML_OUTPUT"];
 
             # STDOUT (to df)
             printf "%s", partitions_str;
         }')
+
+    for _partition in $_partitions_str
     do
         $DF_CMD $DF_PARAMS $_partition 2> /dev/null | $AWK_CMD -v PARTITION=$_partition '
+            BEGIN {
+                fs_counter = 0;
+            }
 
             function concatRestFields(target_field, sep,  _rest, _str) {
                 _rest = NF - target_field;
@@ -543,6 +566,9 @@ MakePartitionsInfo() {
             };
 
             (NR == 2) {
+                p_regexp = "^"PARTITION;
+                if($0 !~ p_regexp) next;
+
                 concatRestFields(7, " ");
 
                 fs_html = "";
@@ -552,13 +578,25 @@ MakePartitionsInfo() {
                     sub(/[^0-9.]+/, "", raw_number);
                     data_attrs = (i == 6) ? " data-bar=\"" raw_number "\"" : "";
                     fs_html = fs_html "<td" data_attrs ">" ((i == 1 && $i != PARTITION) ?
-                        $i " (" PARTITION ")" : $i) "</td>";
+                        $i " (" PARTITION ")" : $i) "</td> \n";
                 };
+                fs_counter++;
 
-                printf "<tr>%s</tr>", fs_html;
+                printf "<tr>%s</tr> \n", fs_html;
+            }
+
+            END {
+                if(fs_counter == 0) {
+                    exit 126;
+                };
             }' >> $HTML_OUTPUT
     done
-    echo "</tbody></table></section>" >> $HTML_OUTPUT
+
+    if [ $? -eq 126 -o -z "$_partitions_str" ]; then
+        echo "<tr><td colspan=\"7\" class=\"center\">No mounted filesystems</td></tr>" >> $HTML_OUTPUT
+    fi
+
+    echo "</tbody></table> \n</section>" >> $HTML_OUTPUT
 }
 
 MakeDevicesInfo() {
@@ -591,6 +629,7 @@ MakeDevicesInfo() {
             makeConstArray(ENVIRON["RRD_SMART_ATTRS_DIFF"], smart_diff_attrs, " ");
 
             smartctl_status = 1;
+
             device_model_family = "";
             device_model_name = "";
             device_serial_number = "";
@@ -609,6 +648,7 @@ MakeDevicesInfo() {
             device_sata_version_string = "";
             device_time_asctime = "";
             device_time = 0;
+
             disk_temp_current = "";
             disk_temp_lifetime_min = "";
             disk_temp_lifetime_max = "";
@@ -616,9 +656,12 @@ MakeDevicesInfo() {
             disk_temp_op_limit_max = ENVIRON["TEMP_ALERT_DEFAULT"];
             disk_temp_limit_min = "";
             disk_temp_limit_max = ENVIRON["TEMP_CRITICAL_DEFAULT"];
+
             smart_status_passed = "";
+
             sct_temp_interval = "";
             sct_temp_size = "";
+
             show_alert_notice = 0;
 
             readSmartDB();
@@ -662,22 +705,39 @@ MakeDevicesInfo() {
                                 msg,
                                 critical)
         {
-            printf "%s -- %s -- %s %s -- %s -- Last=%s (VALUE=%s WORST=%s THRESH=%s WHEN_FAILED=%s) -- %s -- Previous=%s\n",
-                DATE, DEVICE_PATH, id, attr_name, msg, raw_value, value,
-                worst, threshold, when_failed,
+            printf "%s -- %s -- %s %s -- %s -- RAW=%s (VALUE=%s WORST=%s THRESH=%s WHEN_FAILED=%s) -- %s -- Previous=%s\n",
+                DATE,
+                DEVICE_PATH,
+                id,
+                attr_name,
+                msg,
+                raw_value,
+                value,
+                worst,
+                threshold,
+                when_failed,
                 (is_bad == 1) ? "Have reached the threshold!" : "",
                 last_value >>LOG_FILE;
+
                 if(critical == 1) {
                     if(ENVIRON["USE_LOGGER"] == 1) {
-                        system(ENVIRON["LOGGER_CMD"] " " ENVIRON["LOGGER_PARAMS"] " \"" DEVICE_PATH " -- " id " " attr_name " -- " msg " -- Last=" raw_value " (VALUE=" value " WORST=" worst " THRESH=" threshold " WHEN_FAILED=" when_failed ") -- " ((is_bad == 1) ? "Have reached the threshold!" : "") " -- Previous=" last_value"\"");
+                        system(ENVIRON["LOGGER_CMD"] " " ENVIRON["LOGGER_PARAMS"] " \"" DEVICE_PATH " -- " id " " attr_name " -- " msg " -- RAW=" raw_value " (VALUE=" value " WORST=" worst " THRESH=" threshold " WHEN_FAILED=" when_failed ") -- " ((is_bad == 1) ? "Have reached the threshold!" : "") " -- Previous=" last_value"\"");
                     };
                     if(ENVIRON["USE_MAIL"] == 1) {
-                        printf "%s -- %s -- %s -- %s %s -- %s -- Previous=%s (VALUE=%s WORST=%s THRESH=%s WHEN_FAILED=%s) -- %s -- Previous=%s\n",
-                            ENVIRON["HOSTNAME"],  DATE, DEVICE_PATH, id,
-                            attr_name, msg, raw_value, value, worst,
-                            threshold, when_failed,
+                        printf "%s -- %s -- %s -- %s %s -- %s -- RAW=%s (VALUE=%s WORST=%s THRESH=%s WHEN_FAILED=%s) -- %s -- Previous=%s\n",
+                            ENVIRON["HOSTNAME"],
+                            DATE,
+                            DEVICE_PATH,
+                            id,
+                            attr_name,
+                            msg,
+                            raw_value,
+                            value,
+                            worst,
+                            threshold,
+                            when_failed,
                             (is_bad == 1) ? "Have reached the threshold!" : "",
-                            last_value >>ENVIRON["MTA_MSG_FILE"];
+                            last_value >>ENVIRON["MAILER_MSG_FILE"];
                     };
                 };
         };
@@ -774,8 +834,13 @@ MakeDevicesInfo() {
             ret_array[3] = _warn_reset_count;
 
             # DB output
-            printf "%s %s %s %s %s %s\n", _stat_val, _degr_val, _impr_val,
-                value, id, _warn_reset_count >>DB_FILE_TMP;
+            printf "%s %s %s %s %s %s\n",
+                _stat_val,
+                _degr_val,
+                _impr_val,
+                value,
+                id,
+                _warn_reset_count >>DB_FILE_TMP;
 
         };
 
@@ -794,17 +859,17 @@ MakeDevicesInfo() {
                                     impr_value,
                                     diff_val,
                                     is_bad,
-                                    excluded,
+                                    disabled,
 
                                     _stat_mark,
                                     _data_smart_change,
                                     _attr_title_str)
         {
-            _stat_mark = (excluded == 1) ? "" :
+            _stat_mark = (disabled == 1) ? "" :
                 (diff_val > 0) ? "+" diff_val "&uarr;" :
                 (diff_val < 0) ? diff_val "&darr;" : "";
             _data_smart_change = (is_bad == 1) ? "thrshld" :
-                (stat_value == 5) ? "excluded" :
+                (stat_value == 5) ? "disabled" :
                 (stat_value == 4) ? "nonzero" :
                 (stat_value == 3) ? "degr" :
                 (stat_value == 2) ? "lowdegr" :
@@ -814,24 +879,34 @@ MakeDevicesInfo() {
             gsub("_", " ", _attr_title_str);
             gsub("_", " ", when_failed);
 
-            printf "<tr data-smart-change=\"%s\"> \
-                        <td data-tooltip=\"%s\" data-tooltip-hex=\"2\">%s</td> \
-                        <td data-smart-attr=\"%s\" data-smart-device=\"%s\">%s</td> \
-                        <td>%.3d</td> \
-                        <td>%.3d</td> \
-                        <td>%.3d</td> \
-                        <td>%s</td> \
-                        <td data-tooltip=\"%s\" data-tooltip-hex=\"12\">%s</td> \
-                        <td>%s</td> \
-                        <td>%s</td> \
-                        <td%s>%s</td> \
-                    </tr>\n", _data_smart_change, id, id, id, DEVICE, _attr_title_str,
-                value, worst, thresh,
+            printf "<tr data-smart-change=\"%s\"> \n\
+                        <td data-tooltip=\"%s\" data-tooltip-hex=\"2\">%s</td> \n\
+                        <td data-smart-attr=\"%s\" data-smart-device=\"%s\">%s</td> \n\
+                        <td>%.3d</td> \n\
+                        <td>%.3d</td> \n\
+                        <td>%.3d</td> \n\
+                        <td>%s</td> \n\
+                        <td data-tooltip=\"%s\" data-tooltip-hex=\"12\">%s</td> \n\
+                        <td>%s</td> \n\
+                        <td>%s</td> \n\
+                        <td%s>%s</td> \n\
+                    </tr> \n",
+                _data_smart_change,
+                id,
+                id,
+                id,
+                DEVICE,
+                _attr_title_str,
+                value,
+                worst,
+                thresh,
                 (when_failed == "") ? "-" : when_failed,
-                raw_value, raw_string, degr_value, impr_value,
+                raw_value,
+                raw_string,
+                degr_value,
+                impr_value,
                 (_stat_mark == "") ? "" : " data-tooltip=\"previous RAW: " saved_value "\"",
                 _stat_mark >>ENVIRON["HTML_OUTPUT"];
-
         };
 
         function smartDataProcessing(   _line,
@@ -845,7 +920,7 @@ MakeDevicesInfo() {
                                         _alert_value,
                                         _is_bad,
                                         _is_critical,
-                                        _excluded,
+                                        _disabled,
                                         _noramalized_value,
                                         _ret_array,
                                         _diff_val)
@@ -867,7 +942,7 @@ MakeDevicesInfo() {
                 _alert_value = (_id in smart_temp_attrs) ? ENVIRON["TEMP_ALERT_DEFAULT"] : 0;
                 _is_bad = 0;
                 _is_critical = (_id in smart_critical_attrs) ? 1 : 0;
-                _excluded = 0;
+                _disabled = 0;
                 _noramalized_value = normalizeSmartValueStr(_raw_string);
 
                 # Drop excluded SMART attributes
@@ -896,14 +971,14 @@ MakeDevicesInfo() {
                 };
 
                 # Difference of values
-                _diff_val = (_excluded == 1) ? "" : _noramalized_value - _sm_db_last_val;
+                _diff_val = (_disabled == 1) ? "" : _noramalized_value - _sm_db_last_val;
 
                 if(_id in smart_disabled_attrs) {
                     _ret_array[0] = 5;
                     _ret_array[1] = "";
                     _ret_array[2] = "";
                     _ret_array[3] = 0;
-                    _excluded = 1;
+                    _disabled = 1;
                 } else {
                     writeSmartDB(   _id,
                                     _noramalized_value,
@@ -971,7 +1046,7 @@ MakeDevicesInfo() {
                                     _ret_array[2],
                                     _diff_val,
                                     _is_bad,
-                                    _excluded);
+                                    _disabled);
 
                 # STDOUT (to environment)
                 printf "smart%s=%s ", _id,
@@ -989,7 +1064,12 @@ MakeDevicesInfo() {
                 if(_lt_number == "") {
                     break;
                 };
-                printf "<tr><td>%s</td><td>%s</td><td>%s</td></tr>", _lt_number, _lt_hours, _err_desc >>ENVIRON["HTML_OUTPUT"];
+
+                printf "<tr><td>%s</td><td>%s</td><td>%s</td></tr> \n",
+                    _lt_number,
+                    _lt_hours,
+                    _err_desc >>ENVIRON["HTML_OUTPUT"];
+
                 _index++;
             };
         };
@@ -999,25 +1079,25 @@ MakeDevicesInfo() {
             _page_name = "";
 
             while(1) {
-                _page_name = dev_stat_tables[_page ",,page"];
+                _page_name = dev_stat_pages[_page ",,page"];
                 if(_page_name == "") {
                     break;
                 };
 
-                printf "<table class=\"two-cols-table\"> \
-                        <caption>%s</caption><tbody>", _page_name >>ENVIRON["HTML_OUTPUT"];
+                printf "<table class=\"two-cols-table\"> \n\
+                        <caption>%s</caption> \n<tbody>", _page_name >>ENVIRON["HTML_OUTPUT"];
 
                 _table = 0;
                 while(1) {
-                    _attr_name = dev_stat_tables[_page "," _table ",name"];
-                    _value = dev_stat_tables[_page "," _table ",value"];
+                    _attr_name = dev_stat_pages[_page "," _table ",name"];
+                    _value = dev_stat_pages[_page "," _table ",value"];
                     _table++;
 
                     if(_attr_name == "") {
                         break;
                     };
 
-                    printf "<tr><td>%s:</td><td%s>%s</td></tr>",
+                    printf "<tr><td>%s:</td><td%s>%s</td></tr> \n",
                         _attr_name,
                         (_attr_name == "Percentage Used Endurance Indicator") ?
                         " data-bar=\"" _value "\"" : "",
@@ -1025,7 +1105,7 @@ MakeDevicesInfo() {
                         _value "%" : _value >>ENVIRON["HTML_OUTPUT"];
 
                 };
-                print "</tbody></table>" >>ENVIRON["HTML_OUTPUT"];
+                printf "</tbody></table> \n" >>ENVIRON["HTML_OUTPUT"];
                 _page++;
             };
         };
@@ -1127,7 +1207,6 @@ MakeDevicesInfo() {
                 param = substr($0, RSTART + RLENGTH);
                 split(param, p_arr, " = ");
                 smart_attrs_array[num "." trim(p_arr[1])] = trim(p_arr[2]);
-                #smart_attrs_array[num trim(p_arr[1])] = trim(p_arr[2]);
             };
 
             # SMART error log
@@ -1164,10 +1243,10 @@ MakeDevicesInfo() {
                     table = substr($0, RSTART + 6, RLENGTH - 7);
                     param = substr($0, RSTART + RLENGTH);
                     split(param, p_arr, " = ");
-                    dev_stat_tables[page "," table "," trim(p_arr[1])] = trim(p_arr[2]);
+                    dev_stat_pages[page "," table "," trim(p_arr[1])] = trim(p_arr[2]);
                 } else {
                     split($0, p_arr, " = ");
-                    dev_stat_tables[page ",,page"] = trim(p_arr[2]);
+                    dev_stat_pages[page ",,page"] = trim(p_arr[2]);
                 };
             };
 
@@ -1175,20 +1254,24 @@ MakeDevicesInfo() {
 
         END {
             # Device tab
-            printf "<section class=\"device-tab\" data-device=\"%s\" data-tab=\"%d\" data-tab-title=\"%s\"> \
-                <div class=\"tab-flex-container\">\n",
-                DEVICE, DEVICE_NUM, DEVICE_PATH >>ENVIRON["HTML_OUTPUT"];
+            printf "<section class=\"device-tab\" data-device=\"%s\" data-tab=\"%d\" data-tab-title=\"%s\"> \n\
+                <div class=\"tab-flex-container\"> \n",
+                DEVICE,
+                DEVICE_NUM,
+                DEVICE_PATH >>ENVIRON["HTML_OUTPUT"];
 
             # Device header
-            printf "<header class=\"device-header\">%s | %s | Last check: %s</header>\n",
-                DEVICE_PATH, device_model_name, DATE >>ENVIRON["HTML_OUTPUT"];
+            printf "<header class=\"device-header\">%s | %s | Last check: %s</header> \n",
+                DEVICE_PATH,
+                device_model_name,
+                DATE >>ENVIRON["HTML_OUTPUT"];
 
             # Smartctl exit status
             if(smartctl_status == 1 || smartctl_status == 2) {
-                print "<section class=\"device-error\"> \
+                printf "<section class=\"device-error\"> \n\
                     <p class=\"center\"><strong> \
                         Error trying to get S.M.A.R.T. data from device! \
-                    </strong></p></section>\n" >>ENVIRON["HTML_OUTPUT"];
+                    </strong></p> \n</section> \n" >>ENVIRON["HTML_OUTPUT"];
 
                 # STDOUT (to environment)
                 printf "_device_error=1 ";
@@ -1201,132 +1284,148 @@ MakeDevicesInfo() {
             # SCT temperature JS
             if(ENVIRON["SCT_TEMP_HISTORY"] != 0) {
                 printf "<script async=\"false\">\nSCT_DEVICES_ARRAY.push([\n\047%s\047,\n%s,\n%s,\n%s,\n%s,\n%s,\n[",
-                    DEVICE, sct_temp_size, sct_temp_interval, device_time,
-                    disk_temp_op_limit_max, disk_temp_limit_max >>ENVIRON["HTML_OUTPUT"];
+                    DEVICE,
+                    sct_temp_size,
+                    sct_temp_interval,
+                    device_time,
+                    disk_temp_op_limit_max,
+                    disk_temp_limit_max >>ENVIRON["HTML_OUTPUT"];
 
                 for(i = 0; i < length(sct_temp_array); i++) {
                     printf "%s,", sct_temp_array[i] >>ENVIRON["HTML_OUTPUT"];
                 };
 
-                print "]\n]);</script>\n" >>ENVIRON["HTML_OUTPUT"];
+                printf "]\n]);</script> \n" >>ENVIRON["HTML_OUTPUT"];
             };
 
             # SMART table
-            print "<section id=\"smart-table\">\n \
-                <header class=\"section-header\">S.M.A.R.T. attributes</header>\n" >>ENVIRON["HTML_OUTPUT"];
+            printf "<section id=\"smart-table\"> \n\
+                <header class=\"section-header\">S.M.A.R.T. attributes</header> \n" >>ENVIRON["HTML_OUTPUT"];
 
             if(smart_status_passed != "") {
-                printf "<div class=\"smart-status\" data-smart-status=\"passed\"> \
-                    <span class=\"label\">SMART overall-health self-assessment test result: %s</span> \
-                </div>",
+                printf "<div class=\"smart-status\" data-smart-status=\"passed\"> \n\
+                    <span class=\"label\">SMART overall-health self-assessment test result: %s</span> \n\
+                </div> \n",
                     (smart_status_passed == "true") ? "passed" : "failed" >>ENVIRON["HTML_OUTPUT"];
             };
 
             if(length(smart_attrs_array) > 0) {
-                print "<table class=\"smart-table\"> \
-                    <thead> \
-                        <tr> \
-                            <th scope=\"col\">Id#</th> \
-                            <th scope=\"col\">Attribute name</th> \
-                            <th scope=\"col\">VALUE</th> \
-                            <th scope=\"col\">WORST</th> \
-                            <th scope=\"col\">THRESH</th> \
-                            <th scope=\"col\">WHEN FAILED</th> \
-                            <th scope=\"col\">RAW</th> \
-                            <th scope=\"col\">Degr. count</th> \
-                            <th scope=\"col\">Improv. count</th> \
-                            <th scope=\"col\">Last change</th> \
-                        </tr> \
-                    </thead> \
-                    <tbody>" >>ENVIRON["HTML_OUTPUT"];
+                printf "<table class=\"smart-table\"> \n\
+                    <thead> \n\
+                        <tr> \n\
+                            <th scope=\"col\">Id#</th> \n\
+                            <th scope=\"col\">Attribute name</th> \n\
+                            <th scope=\"col\">VALUE</th> \n\
+                            <th scope=\"col\">WORST</th> \n\
+                            <th scope=\"col\">THRESH</th> \n\
+                            <th scope=\"col\">WHEN FAILED</th> \n\
+                            <th scope=\"col\">RAW</th> \n\
+                            <th scope=\"col\">Degr. count</th> \n\
+                            <th scope=\"col\">Improv. count</th> \n\
+                            <th scope=\"col\">Last change</th> \n\
+                        </tr> \n\
+                    </thead> \n\
+                    <tbody> \n" >>ENVIRON["HTML_OUTPUT"];
                 smartDataProcessing();
-                print "</tbody></table>\n" >>ENVIRON["HTML_OUTPUT"];
+                printf "</tbody></table> \n" >>ENVIRON["HTML_OUTPUT"];
             };
 
-            print "</section>" >>ENVIRON["HTML_OUTPUT"];
+            printf "</section> \n" >>ENVIRON["HTML_OUTPUT"];
 
             # SMART graphs
             if(ENVIRON["USE_RRD"] != 0) {
-                printf "<section id=\"smart-graph\"> \
-                    <header class=\"section-header\">S.M.A.R.T. graphs</header> \
-                    <div class=\"graph-container\" data-graph-device=\"%s\"> \
-                        <ul class=\"attrs-links\"></ul> \
-                        <ul class=\"graph-links\"></ul> \
-                        <figure></figure> \
-                </div></section>", DEVICE >>ENVIRON["HTML_OUTPUT"];
+                printf "<section id=\"smart-graph\"> \n\
+                    <header class=\"section-header\">S.M.A.R.T. graphs</header> \n\
+                    <div class=\"graph-container\" data-graph-device=\"%s\"> \n\
+                        <ul class=\"attrs-links\"></ul> \n\
+                        <ul class=\"graph-links\"></ul> \n\
+                        <figure></figure> \n\
+                </div> \n</section> \n",
+                    DEVICE >>ENVIRON["HTML_OUTPUT"];
             };
 
             # SMART error log
             if(length(smart_errors_array) > 0) {
-                print "<section id=\"smart-error-log\"> \
-                    <header class=\"section-header\">S.M.A.R.T. Error Log</header> \
-                    <div class=\"scroll-container\"> \
-                        <table class=\"smart-errors-table\"><thead> \
-                        <tr><th scope=\"col\">Error number</th> \
-                        <th scope=\"col\">Lifetime hours</th> \
-                        <th scope=\"col\">Description</th></tr> \
-                    </thead><tbody></div>" >>ENVIRON["HTML_OUTPUT"];
+                printf "<section id=\"smart-error-log\"> \n\
+                    <header class=\"section-header\">S.M.A.R.T. Error Log</header> \n\
+                    <div class=\"scroll-container\"> \n\
+                        <table class=\"smart-errors-table\"><thead> \n\
+                        <tr><th scope=\"col\">Error number</th> \n\
+                        <th scope=\"col\">Lifetime hours</th> \n\
+                        <th scope=\"col\">Description</th></tr> \n\
+                    </thead><tbody></div> \n" >>ENVIRON["HTML_OUTPUT"];
                 writeSmartErrorLog();
-                print "</tbody></table></section>" >>ENVIRON["HTML_OUTPUT"];
+                printf "</tbody></table> \n</section> \n" >>ENVIRON["HTML_OUTPUT"];
             };
 
             # Temperature
-            printf "<section id=\"temperature\"> \
-                <header class=\"section-header\">Temperature &#176;C</header> \
-                <table class=\"two-cols-table\"><tbody> \
-                    <tr><td>Current:</td><td>%s</td></tr> \
-                    <tr><td>Lifetime min:</td><td>%s</td></tr> \
-                    <tr><td>Lifetime max:</td><td>%s</td></tr> \
-                    <tr><td>Recommended min:</td><td>%s</td></tr> \
-                    <tr><td>Recommended max:</td><td>%s</td></tr> \
-                    <tr><td>Limit min:</td><td>%s</td></tr> \
-                    <tr><td>Limit max:</td><td>%s</td></tr> \
-                </tbody></table></section>\n", disk_temp_current,
-                    disk_temp_lifetime_min, disk_temp_lifetime_max,
-                    disk_temp_op_limit_min, disk_temp_op_limit_max,
-                    disk_temp_limit_min, disk_temp_limit_max >>ENVIRON["HTML_OUTPUT"];
+            printf "<section id=\"temperature\"> \n\
+                <header class=\"section-header\">Temperature &#176;C</header> \n\
+                <table class=\"two-cols-table\"><tbody> \n\
+                    <tr><td>Current:</td><td>%s</td></tr> \n\
+                    <tr><td>Lifetime min:</td><td>%s</td></tr> \n\
+                    <tr><td>Lifetime max:</td><td>%s</td></tr> \n\
+                    <tr><td>Recommended min:</td><td>%s</td></tr> \n\
+                    <tr><td>Recommended max:</td><td>%s</td></tr> \n\
+                    <tr><td>Limit min:</td><td>%s</td></tr> \n\
+                    <tr><td>Limit max:</td><td>%s</td></tr> \n\
+                </tbody></table> \n</section> \n",
+                disk_temp_current,
+                disk_temp_lifetime_min,
+                disk_temp_lifetime_max,
+                disk_temp_op_limit_min,
+                disk_temp_op_limit_max,
+                disk_temp_limit_min,
+                disk_temp_limit_max >>ENVIRON["HTML_OUTPUT"];
 
             # SCT temperature history
             if(ENVIRON["SCT_TEMP_HISTORY"] != 0) {
-                printf "<section id=\"sct-temp\"> \
-                    <header class=\"section-header\">SCT temperature history</header> \
-                    <figure class=\"sct-temp-graph-container\" data-sct-device=\"%s\"></figure> \
-                    <div class=\"sct-temp-container scroll-container\" data-sct-device=\"%s\"></div> \
-                </section>", DEVICE, DEVICE >>ENVIRON["HTML_OUTPUT"];
+                printf "<section id=\"sct-temp\"> \n\
+                    <header class=\"section-header\">SCT temperature history</header> \n\
+                    <figure class=\"sct-temp-graph-container\" data-sct-device=\"%s\"></figure> \n\
+                    <div class=\"sct-temp-container scroll-container\" data-sct-device=\"%s\"></div> \n\
+                </section> \n",
+                    DEVICE,
+                    DEVICE >>ENVIRON["HTML_OUTPUT"];
             };
 
             # Device statistics
-            if(length(dev_stat_tables) > 0) {
-                print "<section id=\"device-stat\"> \
-                    <header class=\"section-header\">Device statistics</header>" >>ENVIRON["HTML_OUTPUT"];
+            if(length(dev_stat_pages) > 0) {
+                printf "<section id=\"device-stat\"> \n\
+                    <header class=\"section-header\">Device statistics</header> \n" >>ENVIRON["HTML_OUTPUT"];
                 writeDevStatHtml();
-                print "</section>" >>ENVIRON["HTML_OUTPUT"];
+                printf "</section> \n" >>ENVIRON["HTML_OUTPUT"];
             };
 
             # Device info
-            printf "<section id=\"device-info\"> \
-                <header class=\"section-header\">Device info</header> \
-                <table class=\"two-cols-table\"><tbody> \
-                    <tr><td>Model Family:</td><td>%s</td></tr> \
-                    <tr><td>Device Model:</td><td>%s</td></tr> \
-                    <tr><td>Serial Number:</td><td>%s</td></tr> \
-                    <tr><td>LU WWN Device Id:</td><td>%x %x %x</td></tr> \
-                    <tr><td>Firmware Version:</td><td>%s</td></tr> \
-                    <tr><td>User Capacity:</td><td>%s bytes [%s Gb] (%s blocks)</td></tr> \
-                    <tr><td>Sector Size (logical/physical):</td><td>%s bytes / %s bytes</td></tr> \
-                    <tr><td>Rotation Rate:</td><td>%s</td></tr> \
-                    <tr><td>Form Factor:</td><td>%s</td></tr> \
-                    <tr><td>Device is:</td><td>%s</td></tr> \
-                    <tr><td>ATA Version is:</td><td>%s</td></tr> \
-                    <tr><td>SATA Version is:</td><td>%s</td></tr> \
-                    <tr><td>Local Time is:</td><td>%s</td></tr> \
-                </tbody></table></section>",
-                device_model_family, device_model_name,
-                device_serial_number, device_wwn_naa,
-                device_wwn_oui, device_wwn_id,
-                device_firmware_version, device_user_capacity_bytes,
+            printf "<section id=\"device-info\"> \n\
+                <header class=\"section-header\">Device info</header> \n\
+                <table class=\"two-cols-table\"><tbody> \n\
+                    <tr><td>Model Family:</td><td>%s</td></tr> \n\
+                    <tr><td>Device Model:</td><td>%s</td></tr> \n\
+                    <tr><td>Serial Number:</td><td>%s</td></tr> \n\
+                    <tr><td>LU WWN Device Id:</td><td>%x %x %x</td></tr> \n\
+                    <tr><td>Firmware Version:</td><td>%s</td></tr> \n\
+                    <tr><td>User Capacity:</td><td>%s bytes [%s Gb] (%s blocks)</td></tr> \n\
+                    <tr><td>Sector Size (logical/physical):</td><td>%s bytes / %s bytes</td></tr> \n\
+                    <tr><td>Rotation Rate:</td><td>%s</td></tr> \n\
+                    <tr><td>Form Factor:</td><td>%s</td></tr> \n\
+                    <tr><td>Device is:</td><td>%s</td></tr> \n\
+                    <tr><td>ATA Version is:</td><td>%s</td></tr> \n\
+                    <tr><td>SATA Version is:</td><td>%s</td></tr> \n\
+                    <tr><td>Local Time is:</td><td>%s</td></tr> \n\
+                </tbody></table> \n</section> \n",
+                device_model_family,
+                device_model_name,
+                device_serial_number,
+                device_wwn_naa,
+                device_wwn_oui,
+                device_wwn_id,
+                device_firmware_version,
+                device_user_capacity_bytes,
                 int(device_user_capacity_bytes / 1e9),
-                device_user_capacity_blocks, device_logical_block_size,
+                device_user_capacity_blocks,
+                device_logical_block_size,
                 device_physical_block_size,
                 (device_rotation_rate == 0) ? "Solid State Device" :
                     device_rotation_rate,
@@ -1334,11 +1433,14 @@ MakeDevicesInfo() {
                 (device_in_smartctl_database == "true") ?
                     "In smartctl database [for details use: -P show]" :
                     "Not in smartctl database [for details use: -P showall]",
-                device_ata_version_string, device_sata_version_string,
+                device_ata_version_string,
+                device_sata_version_string,
                 device_time_asctime >>ENVIRON["HTML_OUTPUT"];
 
-            # DB output (temp: warning, critical)
-            printf "tw %s\ntc %s\n", disk_temp_op_limit_max, disk_temp_limit_max >>DB_FILE_TMP;
+            # DB OUTPUT (temp: warning, critical)
+            printf "tw %s\ntc %s\n",
+                disk_temp_op_limit_max,
+                disk_temp_limit_max >>DB_FILE_TMP;
 
             # Alert notice
             if(show_alert_notice != 0) {
@@ -1350,7 +1452,7 @@ MakeDevicesInfo() {
 
         [ $USE_FDISK = "1" ] && MakePartitionsInfo $_device_path
 
-        echo "</div></section>" >> $HTML_OUTPUT;
+        echo "</div> \n</section>" >> $HTML_OUTPUT;
 
         if [ $USE_RRD = "1" -a $_device_error = "0" -a $# -eq 1 -a "$1" = "rrd" ]; then
             local _rrd_db_file="${RRD_DB_DIR}/${_device}.${RRD_DB_EXT}"
@@ -1371,10 +1473,10 @@ MakeDevicesInfo() {
 }
 
 RunMailer() {
-    if [ -s "$MTA_MSG_FILE" -a -x "$MAILER_SCRIPT" ]; then
-        $MAILER_SCRIPT "$MTA_MSG_FILE" $1
+    if [ -s "$MAILER_MSG_FILE" -a -x "$MAILER_SCRIPT" ]; then
+        $MAILER_SCRIPT "$MAILER_MSG_FILE" $1
     fi
-    [ -e "$MTA_MSG_FILE" ] && rm -f $MTA_MSG_FILE
+    [ -e "$MAILER_MSG_FILE" ] && rm -f $MAILER_MSG_FILE
 }
 
 MainRun() {
@@ -1387,7 +1489,7 @@ MainRun() {
         fi
     done
 
-    [ -e "$MTA_MSG_FILE" ] && rm -f $MTA_MSG_FILE
+    [ -e "$MAILER_MSG_FILE" ] && rm -f $MAILER_MSG_FILE
     MakeHtmlHeader
     MakeDevicesInfo $1
     MakeHtmlFooter
@@ -1418,7 +1520,7 @@ case $1 in
     ;;
     mailtest)
         if [ $USE_MAIL = "1" ]; then
-            echo "${HOSTNAME} -- This is a test message..." > $MTA_MSG_FILE
+            echo "${HOSTNAME} -- This is a test message..." > $MAILER_MSG_FILE
             RunMailer debug
         fi
     ;;

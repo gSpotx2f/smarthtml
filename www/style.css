@@ -26,7 +26,7 @@
     --impr-color: #c8ffe5;
     --idle-color: #f7f7f7;
     --nonzero-color: #fff3e8;
-    /*--excluded-color: #f7f7f7;*/
+    /*--disabled-color: #f7f7f7;*/
 
     --tab-active-top-border-color: #ffa500;
     --link-block-hover-bg: rgba(48, 151, 252, .1);
@@ -474,8 +474,8 @@ tr[data-smart-change="nonzero"] {
     background-color: var(--nonzero-color);
 }
 /*
-tr[data-smart-change="excluded"] {
-    background-color: var(--excluded-color);
+tr[data-smart-change="disabled"] {
+    background-color: var(--disabled-color);
 }
 */
 .scroll-container {
