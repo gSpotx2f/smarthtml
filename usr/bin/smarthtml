@@ -22,8 +22,8 @@ CONFIG_FILE="/opt/etc/${NAME}.conf"
 ### Data directory
 SCRIPT_DATA_DIR="/opt/var/${NAME}"
 ### Email script
-#MAILER_SCRIPT="/opt/var/smarthtml_mailer_sendmail"
-MAILER_SCRIPT="/opt/var/smarthtml_mailer_msmtp"
+#MAILER_SCRIPT="/opt/usr/bin/smarthtml_mailer_sendmail"
+MAILER_SCRIPT="/opt/usr/bin/smarthtml_mailer_msmtp"
 ### HTML directory
 HTML_DIR="/opt/share/www"
 ### URL path for CGI module
