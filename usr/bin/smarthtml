@@ -596,7 +596,7 @@ MakePartitionsInfo() {
         echo "<tr><td colspan=\"7\" class=\"center\">No mounted filesystems</td></tr>" >> $HTML_OUTPUT
     fi
 
-    echo "</tbody></table> \n</section>" >> $HTML_OUTPUT
+    printf "</tbody></table> \n</section>\n" >> $HTML_OUTPUT
 }
 
 MakeDevicesInfo() {
@@ -1452,7 +1452,7 @@ MakeDevicesInfo() {
 
         [ $USE_FDISK = "1" ] && MakePartitionsInfo $_device_path
 
-        echo "</div> \n</section>" >> $HTML_OUTPUT;
+        printf "</div> \n</section>\n" >> $HTML_OUTPUT;
 
         if [ $USE_RRD = "1" -a $_device_error = "0" -a $# -eq 1 -a "$1" = "rrd" ]; then
             local _rrd_db_file="${RRD_DB_DIR}/${_device}.${RRD_DB_EXT}"
