@@ -1,0 +1,48 @@
+#!/bin/sh
+
+#
+# The original tg script can be found here: https://bitbucket.org/padavan/rt-n56u/wiki/RU/%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B0%20%D1%81%D0%BE%D0%BE%D0%B1%D1%89%D0%B5%D0%BD%D0%B8%D0%B9%20%D0%B2%20Telegram
+#
+
+#
+#   $1 - message file
+#   $2 - [debug]
+#
+
+API_TOKEN=""
+CHAT_ID=""
+
+export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export LANG="en_US.UTF-8"
+export LANGUAGE="en"
+export HOSTNAME="$HOSTNAME"
+
+MAILER_MSG_FILE="$1"
+DEBUG="$2"
+CURL_CMD=`which curl`
+if [ $? -ne 0 ]; then
+    echo " Error! curl doesn't exists..." >&2
+    exit 1
+fi
+
+if [ -z "$CHAT_ID" ]; then
+    if [ -n "$DEBUG" ]; then
+        echo "Please, define CHAT_ID first! See \"chat\":{\"id\":xxxxxxx string below:"
+        $CURL_CMD -k -i -X GET "https://api.telegram.org/bot${API_TOKEN}/getUpdates"
+    fi
+    exit 1
+fi
+
+MSG="<strong>`cat "$MAILER_MSG_FILE"`</strong>"
+
+$CURL_CMD --data-urlencode "text=${MSG}" "https://api.telegram.org/bot${API_TOKEN}/sendMessage?chat_id=${CHAT_ID}&parse_mode=html" 2>&1
+return_code=$?
+
+if [ -n "$DEBUG" ]; then
+    if [ $return_code -eq 0 ]; then
+        echo "Message sent successfully."
+    else
+        echo "Error while sending message!"
+        exit 1
+    fi
+fi

@@ -13,12 +13,12 @@ MAIL_PASSWORD="password"
 MAIL_SMTP="smtp.gmail.com"
 MAIL_SMTP_PORT=587
 
-#export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export LANG="en_US.UTF-8"
 export LANGUAGE="en"
 export HOSTNAME="$HOSTNAME"
 
-MTA_MSG_FILE="$1"
+MAILER_MSG_FILE="$1"
 DEBUG="$2"
 DEBUG_KEY=
 if [ -n "$DEBUG" ]; then
@@ -35,4 +35,4 @@ MTA_CMD="${MTA} --host=${MAIL_SMTP} --auth=login --tls=on --port=${MAIL_SMTP_POR
 
 $AWK_CMD 'BEGIN {
         printf "Subject: [S.M.A.R.T.] Warning: %s\n\n", ENVIRON["HOSTNAME"]
-    } {print $0}' $MTA_MSG_FILE | ${MTA_CMD} --passwordeval="echo -n $MAIL_PASSWORD" "$MAIL_RECIPIENT"
+    } {print $0}' $MAILER_MSG_FILE | ${MTA_CMD} --passwordeval="echo -n $MAIL_PASSWORD" "$MAIL_RECIPIENT"

@@ -13,12 +13,12 @@ MAIL_PASSWORD="password"
 MAIL_SMTP="smtp.gmail.com"
 MAIL_SMTP_PORT=25
 
-#export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/opt/bin:/opt/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export LANG="en_US.UTF-8"
 export LANGUAGE="en"
 export HOSTNAME="$HOSTNAME"
 
-MTA_MSG_FILE="$1"
+MAILER_MSG_FILE="$1"
 DEBUG="$2"
 DEBUG_KEY=
 if [ -n "$DEBUG" ]; then
@@ -41,4 +41,4 @@ MTA_HELPER="exec ${OPENSSL_CMD} s_client -quiet -tls1 -starttls smtp -connect ${
 
 $AWK_CMD 'BEGIN {
         printf "Subject: [S.M.A.R.T.] Warning: %s\n\n", ENVIRON["HOSTNAME"]
-    } {print $0}' $MTA_MSG_FILE | ${MTA_CMD}"${MTA_HELPER}" $DEBUG_KEY
+    } {print $0}' $MAILER_MSG_FILE | ${MTA_CMD}"${MTA_HELPER}" $DEBUG_KEY
